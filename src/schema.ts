@@ -23,7 +23,7 @@ const item = z.object({
   tags: z.record(z.string(), tagValue).optional(),
 });
 
-const pool = z.object({ items: z.array(item).min(1).max(500) });
+const pool = z.object({ items: z.array(item).min(1).max(500), scope: z.enum(['global', 'perTeam']).optional() });
 
 const tagging = z.object({
   assignment: z.enum(['chosen', 'fixed', 'none']),
@@ -40,6 +40,7 @@ const step = z.object({
   tag: z.string().optional(),
   count: z.number().int().min(1).max(50).default(1),
   timer: z.number().int().min(1).max(3600).optional(),
+  pause: z.union([z.literal('ready'), z.number().int().min(1).max(3600)]).optional(),
   restrict: z.literal('tag').optional(),
   blind: z.boolean().optional(),
   reveal: z.union([z.literal('end'), z.number().int().min(0)]).optional(),
@@ -102,7 +103,6 @@ export const presetSchema = z
         else if (s.count > p.pools[s.pool].items.length) bad(at('count'), 'exceeds pool size');
         if (s.tag) bad(at('tag'), 'only allowed for "choose"');
         if (s.restrict) {
-          if (s.action !== 'pick') bad(at('restrict'), 'only allowed on "pick"');
           if (t.assignment === 'none') bad(at('restrict'), 'needs tagging.assignment "chosen" or "fixed"');
         }
         if (s.blind && s.action !== 'pick') bad(at('blind'), 'only allowed on "pick"');

@@ -110,9 +110,9 @@ describe('preset schema', () => {
     it('item tag values must be in tagging.values', () => {
       expect(mutate((p) => (p.pools.divisions.items[0].tags.side = 'mars')).map((e) => e.path)).toContain('pools.divisions.items[0].tags.side');
     });
-    it('restrict needs tagging and a pick', () => {
+    it('restrict needs tagging', () => {
       expect(mutate((p) => { p.tagging = { assignment: 'none' }; p.steps.shift(); }).map((e) => e.path)).toContain('steps[2].restrict');
-      expect(mutate((p) => (p.steps[1].restrict = 'tag')).map((e) => e.path)).toContain('steps[1].restrict');
+
     });
   });
 

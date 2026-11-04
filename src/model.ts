@@ -10,6 +10,8 @@ export interface Item {
 
 export interface Pool {
   items: Item[];
+  /** global: any pick or ban removes the item for everyone (default). perTeam: a pick removes it for that team only; a ban removes it from the opponent's options. */
+  scope?: 'global' | 'perTeam';
 }
 
 export interface Tagging {
@@ -31,7 +33,9 @@ export interface Step {
   count: number;
   /** Seconds. */
   timer?: number;
-  /** Pick must match the team's assigned tag value. */
+  /** Seconds of timed pause before the step, or 'ready' to wait for both captains. */
+  pause?: number | 'ready';
+  /** Item must match the tag value of the team that owns the choice (the opponent for a perTeam ban). */
   restrict?: 'tag';
   /** Choice hidden from the opponent until `reveal`. */
   blind?: boolean;
@@ -46,4 +50,31 @@ export interface Preset {
   pools: Record<string, Pool>;
   steps: Step[];
   pauses: { between: boolean };
+}
+
+/** One atomic action: a preset step with `count` n expands to n turns. */
+export interface Turn {
+  team: Team;
+  action: Action;
+  /** Pool name for pick and ban, tag name for choose. */
+  target: string;
+  timer: number;
+  pause?: number | 'ready';
+  restrict?: 'tag';
+  blind?: boolean;
+  reveal?: 'end' | number;
+  /** Index of the preset step this turn came from. */
+  step: number;
+}
+
+export interface Entry {
+  /** Index of the turn this entry fulfils. */
+  index: number;
+  team: Team;
+  action: Action;
+  target: string;
+  itemId: string;
+  auto: boolean;
+  /** Uid of the browser that committed a manual pick. Auto-picks have none. */
+  by?: string;
 }
