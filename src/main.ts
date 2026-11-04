@@ -1,3 +1,4 @@
+import './styles.css';
 import { newPreset } from './builder/edit';
 import { mountBuilder, presetFromHash, type SaveResult } from './builder/view';
 import { mountLauncher } from './launcher';
