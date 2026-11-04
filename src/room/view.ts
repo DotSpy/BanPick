@@ -1,6 +1,7 @@
 import { btn, h } from '../dom';
 import { currentTurn, type DraftState } from '../draft';
 import type { Team, Turn } from '../model';
+import { itemIcon } from '../icon';
 import { availableList, visibleHistory } from '../rules';
 
 /** What the view needs from a room; `Room` satisfies it. */
@@ -36,8 +37,7 @@ const secondsLeft = (s: DraftState, now: number) => (s.deadline ? Math.max(0, Ma
 
 function itemButton(s: DraftState, id: string, disabled: boolean, selected: boolean, onClick: () => void) {
   const item = itemOf(s, id);
-  const image = item?.image ? h('img', { src: item.image, alt: '', width: 32 }) : '';
-  return h('button', { type: 'button', disabled, className: selected ? 'selected' : '', ariaPressed: String(selected), onclick: onClick }, image, item?.name ?? id);
+  return h('button', { type: 'button', disabled, className: selected ? 'selected' : '', ariaPressed: String(selected), onclick: onClick }, itemIcon(item), item?.name ?? id);
 }
 
 /** Captain-name form. It lives outside the re-rendered content so typing is not lost on live updates. */
@@ -112,7 +112,10 @@ export function mountRoom(root: HTMLElement, room: RoomPort, now: () => number =
 
     body.push(
       h('ol', { className: 'history' }, ...visibleHistory(s, turn, viewer).map((e) =>
-        h('li', { className: `${e.action} team-${e.team}`, textContent: `${s.teams[e.team].name}: ${e.action} ${e.itemId ? nameOf(s, e.itemId) : '(hidden)'}${e.auto ? ' (auto)' : ''}` }),
+        h('li', { className: `${e.action} team-${e.team}` },
+          `${s.teams[e.team].name}: ${e.action} `,
+          e.itemId ? itemIcon(itemOf(s, e.itemId)) : '',
+          `${e.itemId ? nameOf(s, e.itemId) : '(hidden)'}${e.auto ? ' (auto)' : ''}`),
       )),
     );
     content.replaceChildren(...body);

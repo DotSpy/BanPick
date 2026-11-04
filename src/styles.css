@@ -175,7 +175,11 @@ form.name[hidden] { display: none; }
 .items button:hover:not(:disabled) { background: var(--info-bg); border-color: var(--primary); color: var(--text); }
 .items button.selected, .items button.selected:hover:not(:disabled) { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
 .items button:disabled { background: var(--surface-2); color: var(--muted); }
-.items img { width: 32px; height: 32px; border-radius: 4px; object-fit: cover; }
+.icon-img { width: 32px; height: 32px; border-radius: 4px; object-fit: cover; vertical-align: middle; flex: none; }
+.history .icon-img, .row .icon-img { width: 24px; height: 24px; margin: 0 var(--s-1); }
+.icon-fallback { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); font-weight: 700; flex: none; }
+.icon-fallback::before { content: attr(data-initial); }
+.history .icon-fallback, .row .icon-fallback { width: 24px; height: 24px; margin: 0 var(--s-1); font-size: var(--fs-sm); }
 button.commit { width: 100%; background: var(--success); border-color: var(--success); font-size: var(--fs-lg); min-height: 52px; }
 button.commit:hover:not(:disabled) { background: #0f5223; border-color: #0f5223; }
 

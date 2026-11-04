@@ -273,6 +273,27 @@ describe('room view guidance', () => {
 
     expect(root.querySelector('.items img')?.getAttribute('src')).toBe('https://x.test/m.png');
   });
+
+  it('shows a placeholder when an item image fails to load', async () => {
+    const preset = makePreset([step('A', 'ban', 'maps')]);
+    preset.pools.maps.items[0].image = 'https://x.test/m.png';
+    const { a } = await started(preset);
+    const { root } = view(a);
+
+    root.querySelector('.items img')!.dispatchEvent(new Event('error'));
+
+    expect(root.querySelector('.items .icon-fallback')).not.toBeNull();
+  });
+
+  it('shows the icon of a banned item in the history', async () => {
+    const preset = makePreset([step('A', 'ban', 'maps'), step('B', 'ban', 'maps')]);
+    preset.pools.maps.items[0].image = 'https://x.test/m.png';
+    const { a, b } = await started(preset);
+    await a.act(preset.pools.maps.items[0].id);
+    const { root } = view(b);
+
+    expect(root.querySelector('.history img')?.getAttribute('src')).toBe('https://x.test/m.png');
+  });
 });
 
 describe('captain name form', () => {

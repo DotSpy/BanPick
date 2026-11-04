@@ -3,6 +3,7 @@ import { validatePreset } from '../schema';
 import * as E from './edit';
 import { draftOrder } from './preview';
 import { btn, h } from '../dom';
+import { itemIcon } from '../icon';
 import { linksPanel } from '../links';
 import type { Link } from '../route';
 import { decodePreset, encodePreset } from './share';
@@ -76,7 +77,7 @@ export function mountBuilder(root: HTMLElement, initial: Preset, onSave?: (p: Pr
             input(`${name} item ${i + 1} name`, item.name, (v) => update(E.updateItem(preset, name, i, { name: v }))),
             input(`${name} item ${i + 1} tags`, E.formatTags(item.tags), (v) => update(E.updateItem(preset, name, i, { tags: E.parseTags(v) })), { placeholder: 'tag:value, …' }),
             input(`${name} item ${i + 1} image link`, item.image ?? '', (v) => update(E.updateItem(preset, name, i, { image: v })), { placeholder: 'https://…' }),
-            item.image ? h('img', { src: item.image, alt: item.name, width: 24, onerror: (e: Event) => ((e.target as HTMLElement).replaceWith(item.name)) }) : '',
+            itemIcon(item, item.name),
             btn('✕', () => update(E.removeItem(preset, name, i)), { className: 'icon', ariaLabel: `Remove ${name} item ${i + 1}` }),
           ),
         ),
