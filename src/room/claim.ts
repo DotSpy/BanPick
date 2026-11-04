@@ -23,8 +23,18 @@ export function decideClaim(s: DraftState, uid: string, want: Team, name: string
   const seat = s.teams[want];
   seat.owner = uid;
   seat.connected = true;
-  if (name) seat.name = seat.captain = name.slice(0, 30);
+  if (cleanName(name)) seat.name = seat.captain = cleanName(name);
   return { changed: true, refusal: null };
+}
+
+const cleanName = (name: string) => name.trim().slice(0, 30);
+
+/** Sets the captain name of a seat the caller already holds. Returns a refusal, or null when applied. */
+export function renameSeat(s: DraftState, team: Team, name: string): string | null {
+  const clean = cleanName(name);
+  if (!clean) return 'Enter a name.';
+  s.teams[team].name = s.teams[team].captain = clean;
+  return null;
 }
 
 /** Frees a lobby seat so the link can claim it again. */

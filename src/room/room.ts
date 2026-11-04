@@ -4,7 +4,10 @@ import {
 } from '../draft';
 import type { Preset, Team } from '../model';
 import { draftFromDoc, draftToDoc, type DraftDoc } from '../persist/docs';
-import { decideClaim, freeSeat } from './claim';
+import { sleep as realSleep, backoffDelay, withRetry } from './backoff';
+import { decideClaim, freeSeat, renameSeat } from './claim';
+
+const WRITE_ATTEMPTS = 3;
 
 /** Transport port. The Firestore adapter implements it; tests use an in-memory one. */
 export interface DraftStore {
@@ -23,6 +26,8 @@ export interface RoomDeps {
   preset: Preset;
   uid: string;
   now(): number;
+  /** Waits between retries; defaults to a real timer. */
+  sleep?(ms: number): Promise<void>;
 }
 
 /** One browser's view of one draft: claims a seat, applies this user's actions and advances overdue timers. */
@@ -35,6 +40,8 @@ export class Room {
   private listeners = new Set<() => void>();
   private unsubscribe: (() => void) | null = null;
   private ticking = false;
+  private disposed = false;
+  private retries = 0;
 
   constructor(private d: RoomDeps) {}
 
@@ -48,11 +55,12 @@ export class Room {
     const { store, roomId, preset, now } = this.d;
     await store.create(roomId, draftToDoc(createState(roomId, preset, { A: 'Team A', B: 'Team B' }, now()), now()));
     if (want) this.notice = await this.mutate((s) => decideClaim(s, this.d.uid, want, name).refusal);
-    this.unsubscribe = store.subscribe(roomId, (doc) => this.receive(doc), (e) => this.fail(e));
+    this.follow();
     this.emit();
   }
 
   dispose() {
+    this.disposed = true;
     this.unsubscribe?.();
     this.listeners.clear();
   }
@@ -72,6 +80,9 @@ export class Room {
   }
   confirmNext() {
     return this.seated((s, team, now) => confirmNext(s, team, now));
+  }
+  setName(name: string) {
+    return this.seated((s, team) => renameSeat(s, team, name));
   }
   release() {
     return this.seated((s, team) => {
@@ -114,28 +125,41 @@ export class Room {
   private async mutate(change: (s: DraftState, now: number) => string | null): Promise<string | null> {
     let refusal: string | null = null;
     try {
-      await this.d.store.transact(this.d.roomId, (current) => {
-        refusal = null;
-        if (!current) {
-          refusal = 'Draft not found';
-          return null;
-        }
-        const loaded = draftFromDoc(current);
-        if (!loaded.ok) {
-          refusal = loaded.error;
-          return null;
-        }
-        const now = this.d.now();
-        refusal = change(loaded.value, now);
-        return refusal ? null : draftToDoc(loaded.value, now);
-      });
+      await withRetry(
+        () =>
+          this.d.store.transact(this.d.roomId, (current) => {
+            refusal = null;
+            if (!current) {
+              refusal = 'Draft not found';
+              return null;
+            }
+            const loaded = draftFromDoc(current);
+            if (!loaded.ok) {
+              refusal = loaded.error;
+              return null;
+            }
+            const now = this.d.now();
+            refusal = change(loaded.value, now);
+            return refusal ? null : draftToDoc(loaded.value, now);
+          }),
+        WRITE_ATTEMPTS,
+        this.wait,
+      );
     } catch {
       return 'Could not save your change. Check your connection and try again.';
     }
     return refusal;
   }
 
+  private wait = (ms: number) => (this.d.sleep ?? realSleep)(ms);
+
+  private follow() {
+    const { store, roomId } = this.d;
+    this.unsubscribe = store.subscribe(roomId, (doc) => this.receive(doc), (e) => this.fail(e));
+  }
+
   private receive(doc: DraftDoc | null) {
+    this.retries = 0;
     const loaded = doc ? draftFromDoc(doc) : null;
     if (loaded?.ok) {
       this.state = loaded.value;
@@ -148,8 +172,12 @@ export class Room {
   }
 
   private fail(e: unknown) {
-    this.integrity = `Connection lost: ${e instanceof Error ? e.message : String(e)}`;
+    this.unsubscribe?.();
+    this.integrity = `Connection lost: ${e instanceof Error ? e.message : String(e)}. Reconnecting…`;
     this.emit();
+    void this.wait(backoffDelay(this.retries++)).then(() => {
+      if (!this.disposed) this.follow();
+    });
   }
 
   private emit() {

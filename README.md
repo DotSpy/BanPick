@@ -58,7 +58,7 @@ Blind picks are hidden **in the UI only**. The draft state, including blind choi
 - `presets/{id}`: preset JSON string plus `ownerUid`, `createdAt`, `updatedAt`. Read by id only (no list queries). Only the creator (anonymous uid) can update; this is enforced in `firestore.rules` and in `savePreset`. Presets cannot be deleted.
 - `drafts/{id}`: seats are bound to the uid that claimed them. Rules check seat ownership and phase transitions; move legality is enforced by the client engine and re-verified on load.
 - Presets can also be shared without a database through the compressed link produced by the builder (`#<code>`).
-- The Firestore **security rules are tested against the emulator**: `npm run test:rules` (35 rules tests plus 7 adapter tests in `rules-tests/`). It needs a **HotSpot JDK 21+ on PATH or `JAVA_HOME`** (for example Corretto or Temurin). OpenJ9/Semeru does not work and cannot be fixed from this repo: the emulator (v1.22.0) sizes objects in `SizeOf.isCompressedOops`, which calls `HotSpotDiagnosticMXBean.getVMOption("UseCompressedOops")`. OpenJ9 throws `IllegalArgumentException: OpenJ9 doesn't support the API`, so loading rules returns a 500 (see `firestore-debug.log`). Checked on Semeru 21.0.3 (OpenJ9 0.44); setting `-XX:±UseCompressedOops` via `JAVA_TOOL_OPTIONS` does not help. Supported: Corretto, Temurin or any other HotSpot JDK (verified on Corretto 25). The first run downloads the emulator jar. The rules tests are separate from `npm test`, which needs no Java. The Firestore adapters (`src/persist/firestore.ts`, `src/room/firestore.ts`) are now covered by emulator tests (`rules-tests/adapters.test.ts`); only a real Firebase project and anonymous auth remain untested.
+- The Firestore **security rules are tested against the emulator**: `npm run test:rules` (35 rules tests plus 7 adapter tests in `rules-tests/`). It needs a **HotSpot JDK 21+ on PATH or `JAVA_HOME`** (for example Corretto or Temurin). OpenJ9/Semeru does not work and cannot be fixed from this repo: the emulator (v1.22.0) sizes objects in `SizeOf.isCompressedOops`, which calls `HotSpotDiagnosticMXBean.getVMOption("UseCompressedOops")`. OpenJ9 throws `IllegalArgumentException: OpenJ9 doesn't support the API`, so loading rules returns a 500 (see `firestore-debug.log`). Checked on Semeru 21.0.3 (OpenJ9 0.44); setting `-XX:Â±UseCompressedOops` via `JAVA_TOOL_OPTIONS` does not help. Supported: Corretto, Temurin or any other HotSpot JDK (verified on Corretto 25). The first run downloads the emulator jar. The rules tests are separate from `npm test`, which needs no Java. The Firestore adapters (`src/persist/firestore.ts`, `src/room/firestore.ts`) are now covered by emulator tests (`rules-tests/adapters.test.ts`); only a real Firebase project and anonymous auth remain untested (blocked: no project of our own is configured; see below).
 
 ### Firestore free-tier (Spark) quotas
 
@@ -78,7 +78,11 @@ Rough budget (our estimate, not from Firebase): every write to a draft is pushed
 
 ## Running a draft
 
-Open `#room/<roomId>/<presetRef>/<A|B|spec>`. `presetRef` is `builtin-<id>` for a WARNO preset or a saved preset id. The first opener creates `drafts/{roomId}`; each seat is bound to the browser's anonymous uid. Set `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID` and `VITE_FIREBASE_APP_ID` (for example in `.env.local`) and enable Anonymous sign-in. Picking is two clicks: select, then confirm; if the timer runs out the selected (or a random) item is committed by any connected browser. The room has no reconnect logic of its own; it relies on the Firestore SDK.
+Open `#room/<roomId>/<presetRef>/<A|B|spec>`. `presetRef` is `builtin-<id>` for a WARNO preset or a saved preset id. The first opener creates `drafts/{roomId}`; each seat is bound to the browser's anonymous uid. Set `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID` and `VITE_FIREBASE_APP_ID` (for example in `.env.local`) and enable Anonymous sign-in. Picking is two clicks: select, then confirm; if the timer runs out the selected (or a random) item is committed by any connected browser. Captains can set their name in the form above the draft. If the live subscription errors, the room shows Connection lost… Reconnecting… and resubscribes with exponential backoff (1 s, 2 s, 4 s … capped at 30 s). Writes that fail with a transient Firestore error (unavailable, deadline-exceeded, borted) are retried up to 3 times with the same backoff; permission and validation errors are not retried. This logic is in src/room/backoff.ts and src/room/room.ts and is tested with a flaky in-memory store.
+
+## Not verified against a real Firebase project
+
+The adapters and anonymous sign-in (src/firebase.ts) have only run against the emulator. To verify: create a dedicated Firebase project, enable Anonymous sign-in, set the VITE_FIREBASE_* variables, deploy irestore.rules, and run a two-browser draft. Do not reuse another app's project, since deploying the rules replaces its existing ones.
 
 ## Not in the MVP
 
@@ -89,6 +93,7 @@ No undo/redo, no series (multi-game) logic, no preset deletion, no server-side h
 ```
 npm install
 npm test        # vitest (unit and view tests, no Java needed)
+npx vite build   # production build
 npm run test:rules  # Firestore rules against the emulator (needs a HotSpot JDK 21+)
 npx tsc --noEmit
 npx vite        # builder UI

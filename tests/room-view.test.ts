@@ -113,3 +113,45 @@ describe('room view', () => {
     dispose();
   });
 });
+
+describe('captain name form', () => {
+  const seated = async (want: 'A' | null) => {
+    const { store } = memoryDraftStore();
+    const room = new Room({ store, roomId: 'r', preset: makePreset([step('A', 'ban', 'maps')]), uid: 'ua', now: () => 1000 });
+    await room.open(want);
+    const root = document.createElement('div');
+    mountRoom(root, room);
+    return { room, root, form: root.querySelector('form')!, input: root.querySelector('input')! };
+  };
+
+  it('is hidden for a spectator', async () => {
+    const { form } = await seated(null);
+
+    expect(form.hidden).toBe(true);
+  });
+
+  it('is shown to a seated captain with the current name', async () => {
+    const { form, input } = await seated('A');
+
+    expect([form.hidden, input.value]).toEqual([false, 'Team A']);
+  });
+
+  it('renames the seat when submitted', async () => {
+    const { room, root, input } = await seated('A');
+    input.value = 'Ada';
+
+    [...root.querySelectorAll('button')].find((x) => x.textContent === 'Set name')!.click();
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(room.state!.teams.A.name).toBe('Ada');
+  });
+
+  it('keeps what the captain is typing across live updates', async () => {
+    const { room, input } = await seated('A');
+    input.value = 'Ad';
+
+    await room.setReady(true);
+
+    expect(input.value).toBe('Ad');
+  });
+});

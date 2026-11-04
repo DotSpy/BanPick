@@ -14,6 +14,7 @@ export interface RoomPort {
   select(itemId: string | null): Promise<void>;
   setReady(ready: boolean): Promise<void>;
   confirmNext(): Promise<void>;
+  setName(name: string): Promise<void>;
   tick(): Promise<void>;
 }
 
@@ -27,12 +28,36 @@ const nameOf = (s: DraftState, id: string) => {
 
 const secondsLeft = (s: DraftState, now: number) => (s.deadline ? Math.max(0, Math.ceil((s.deadline - now) / 1000)) : null);
 
+/** Captain-name form. It lives outside the re-rendered content so typing is not lost on live updates. */
+function nameForm(room: RoomPort) {
+  const input = h('input', { type: 'text', maxLength: 30, placeholder: 'Captain name' }) as HTMLInputElement;
+  const el = h('form', { className: 'name', hidden: true }, input, btn('Set name', () => void room.setName(input.value), { type: 'submit' }));
+  el.onsubmit = (e) => e.preventDefault();
+  let filled = false;
+  return {
+    el,
+    sync() {
+      const seated = room.role !== 'spec' && !!room.state;
+      el.hidden = !seated;
+      if (seated && !filled) {
+        input.value = room.state!.teams[room.role as Team].name;
+        filled = true;
+      }
+    },
+  };
+}
+
 /** Renders the draft room and keeps it live. Returns a dispose function. */
 export function mountRoom(root: HTMLElement, room: RoomPort, now: () => number = Date.now): () => void {
+  const content = h('div');
+  const nameBox = nameForm(room);
+  root.replaceChildren(nameBox.el, content);
+
   function render() {
+    nameBox.sync();
     const s = room.state;
     if (!s) {
-      root.replaceChildren(h('p', { textContent: room.integrity ?? 'Connecting…' }));
+      content.replaceChildren(h('p', { textContent: room.integrity ?? 'Connecting…' }));
       return;
     }
     const viewer = room.role === 'spec' ? null : room.role;
@@ -64,7 +89,7 @@ export function mountRoom(root: HTMLElement, room: RoomPort, now: () => number =
         h('li', { textContent: `${s.teams[e.team].name}: ${e.action} ${e.itemId ? nameOf(s, e.itemId) : '(hidden)'}${e.auto ? ' (auto)' : ''}` }),
       )),
     );
-    root.replaceChildren(...body);
+    content.replaceChildren(...body);
   }
 
   const unsubscribe = room.subscribe(render);
@@ -78,3 +103,4 @@ export function mountRoom(root: HTMLElement, room: RoomPort, now: () => number =
     unsubscribe();
   };
 }
+
