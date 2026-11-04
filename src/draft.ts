@@ -151,12 +151,14 @@ export function verifyState(state: DraftState): string | null {
       return `Entry ${e.index + 1} does not match the preset's step order`;
     }
     if (e.auto && turn.timer <= 0) return `Entry ${e.index + 1} is marked as an automatic pick but the step has no timer`;
-    if (!e.auto && e.by !== undefined && e.by !== state.teams[e.team].owner) {
+    const owner = state.teams[e.team].owner;
+    if (!e.auto && owner !== null && e.by !== owner) {
       return `${state.teams[e.team].name} "${e.action} ${e.target}" at step ${e.index + 1} was not requested by its seat owner`;
     }
     const err = applyPick(fresh, e.team, e.itemId, 0, e.auto);
     if (err) return `Entry ${e.index + 1} is illegal: ${err}`;
   }
+  if (state.phase === 'lobby' && (state.history.length > 0 || state.turnIndex !== 0)) return 'A draft in the lobby cannot have history';
   if (state.phase !== 'lobby' && (fresh.turnIndex !== state.turnIndex || fresh.phase !== state.phase)) {
     return 'Draft position does not match its history';
   }

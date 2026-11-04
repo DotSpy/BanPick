@@ -213,6 +213,16 @@ describe('step rules', () => {
     expect(paths).toContain('steps[2].restrict');
   });
 
+  it('restrict needs the tag chosen by an earlier choose step', () => {
+    const paths = errorPaths((p) => p.steps.unshift({ team: 'B', action: 'pick', pool: 'divisions', restrict: 'tag', count: 1 }));
+
+    expect(paths).toContain('steps[0].restrict');
+  });
+
+  it('restrict is accepted after the choose step', () => {
+    expect(errorPaths(() => {})).not.toContain('steps[2].restrict');
+  });
+
   it('blind is only allowed on pick', () => {
     expect(errorPaths((p) => (p.steps[1].blind = true))).toContain('steps[1].blind');
   });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { newPreset } from '../src/builder/edit';
-import { applyPick } from '../src/draft';
+import { applyPick, createState } from '../src/draft';
 import { canEditPreset, draftFromDoc, draftToDoc, presetFromDoc, presetToDoc, type PresetDoc } from '../src/persist/docs';
 import { loadPreset, savePreset, type PresetStore, type Session } from '../src/persist/presets';
 import { makePreset, started, step } from './fixtures';
@@ -141,6 +141,22 @@ describe('draft documents', () => {
   it('rejects a draft that embeds an invalid preset', () => {
     const s = draft();
     s.preset = { ...s.preset, steps: [] };
+
+    expect(draftFromDoc(draftToDoc(s, 1)).ok).toBe(false);
+  });
+
+  it('rejects a document whose seat fields disagree with the state', () => {
+    const s = draft();
+    s.teams.A.owner = 'uA';
+
+    const r = draftFromDoc({ ...draftToDoc(s, 1), ownerA: 'mallory' });
+
+    expect(r.ok).toBe(false);
+  });
+
+  it('rejects a lobby draft that already has history', () => {
+    const s = createState('t', makePreset([step('A', 'ban', 'maps')]), { A: 'A', B: 'B' }, 0);
+    s.history.push({ index: 0, team: 'A', action: 'ban', target: 'maps', itemId: 'm1', auto: false });
 
     expect(draftFromDoc(draftToDoc(s, 1)).ok).toBe(false);
   });

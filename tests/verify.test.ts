@@ -33,8 +33,8 @@ describe('verifyState', () => {
     expect(verifyState(afterChoice('uid-a'))).toBeNull();
   });
 
-  it('accepts a legacy entry without attribution', () => {
-    expect(verifyState(afterChoice(undefined))).toBeNull();
+  it('flags a manual entry without attribution when the seat has an owner', () => {
+    expect(verifyState(afterChoice(undefined))).toMatch(/not requested by its seat owner/);
   });
 
   it('flags an entry committed by someone who does not own the seat', () => {
@@ -56,21 +56,21 @@ describe('verifyState', () => {
   });
 
   it('flags an entry whose action differs from the preset', () => {
-    const s = afterChoice(undefined);
+    const s = afterChoice('uid-a');
     s.history[0].action = 'pick';
 
     expect(verifyState(s)).toMatch(/step order/);
   });
 
   it('flags an entry by the wrong team', () => {
-    const s = afterChoice(undefined);
+    const s = afterChoice('uid-a');
     s.history[0].team = 'B';
 
     expect(verifyState(s)).toMatch(/step order/);
   });
 
   it('flags an item that was not legal at that point', () => {
-    const s = afterChoice(undefined);
+    const s = afterChoice('uid-a');
     s.history[0].itemId = 'bogus';
 
     expect(verifyState(s)).toMatch(/illegal/);
@@ -94,7 +94,7 @@ describe('verifyState', () => {
   });
 
   it('flags a draft position that does not match its history', () => {
-    const s = afterChoice(undefined);
+    const s = afterChoice('uid-a');
     s.turnIndex = 0;
 
     expect(verifyState(s)).toMatch(/position/);

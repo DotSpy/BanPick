@@ -33,7 +33,7 @@ export interface Step {
   count: number;
   /** Seconds. */
   timer?: number;
-  /** Seconds of timed pause before the step, or 'ready' to wait for both captains. */
+  /** Seconds of timed pause before each turn of the step, or 'ready' to wait for both captains before each turn. */
   pause?: number | 'ready';
   /** Item must match the tag value of the team that owns the choice (the opponent for a ban on a non-global pool). */
   restrict?: 'tag';

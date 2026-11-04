@@ -68,6 +68,15 @@ describe('seat claiming', () => {
 
     expect(s.teams.A).toMatchObject({ owner: null, connected: false, ready: false, captain: null });
   });
+
+  it('resets the captain name of a freed seat to the default', () => {
+    const s = empty();
+    decideClaim(s, 'u1', 'A', 'Ann');
+
+    freeSeat(s, 'A');
+
+    expect(s.teams.A.name).toBe('Team A');
+  });
 });
 
 describe('room', () => {

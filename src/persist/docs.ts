@@ -58,6 +58,12 @@ export function draftToDoc(s: DraftState, now: number): DraftDoc {
   };
 }
 
+/** The top-level fields are what the security rules see; they must agree with the state the engine acts on. */
+function mismatch(doc: DraftDoc, s: DraftState): string | null {
+  const same = doc.ownerA === s.teams.A.owner && doc.ownerB === s.teams.B.owner && doc.phase === s.phase && doc.turnIndex === s.turnIndex && doc.deadline === s.deadline;
+  return same ? null : 'Stored seats or position do not match the draft state';
+}
+
 /** A stored draft is only accepted if its preset is valid and its history is a legal outcome of the rules. */
 export function draftFromDoc(doc: DraftDoc): Loaded<DraftState> {
   let state: DraftState;
@@ -69,6 +75,6 @@ export function draftFromDoc(doc: DraftDoc): Loaded<DraftState> {
   const preset = validatePreset(state.preset);
   if (!preset.ok) return { ok: false, error: describeErrors(preset.errors) };
   state.preset = preset.preset;
-  const problem = verifyState(state);
+  const problem = verifyState(state) ?? mismatch(doc, state);
   return problem ? { ok: false, error: problem } : { ok: true, value: state };
 }

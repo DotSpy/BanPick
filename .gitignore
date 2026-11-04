@@ -3,3 +3,6 @@ dist
 
 firestore-debug.log
 ui-debug.log
+emu.*.log
+vite.*.log
+firebase-debug.log

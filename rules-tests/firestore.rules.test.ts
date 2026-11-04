@@ -233,10 +233,22 @@ describe('rules: drafts, overdue timers', () => {
     await assertFails(updateDoc(draftRef(as('spectator')), advance));
   });
 
-  it('refuses an overdue write that does not move the turn forward', async () => {
+  it('refuses an overdue write that changes neither the turn nor the deadline', async () => {
     await seed('drafts/r', draftingDraft({ deadline: 1, turnIndex: 3 }));
 
-    await assertFails(updateDoc(draftRef(as('spectator')), { ...advance, turnIndex: 3 }));
+    await assertFails(updateDoc(draftRef(as('spectator')), { ...advance, turnIndex: 3, deadline: 1 }));
+  });
+
+  it('lets anyone end an overdue pause, which moves the deadline but not the turn', async () => {
+    await seed('drafts/r', draftingDraft({ deadline: 1, turnIndex: 3 }));
+
+    await assertSucceeds(updateDoc(draftRef(as('spectator')), { ...advance, turnIndex: 3, deadline: Date.now() + 30_000 }));
+  });
+
+  it('refuses moving the turn backwards on an overdue draft', async () => {
+    await seed('drafts/r', draftingDraft({ deadline: 1, turnIndex: 3 }));
+
+    await assertFails(updateDoc(draftRef(as('spectator')), { ...advance, turnIndex: 2 }));
   });
 
   it('refuses an overdue write that changes seats', async () => {

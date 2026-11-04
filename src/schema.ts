@@ -46,6 +46,10 @@ const step = z.object({
   reveal: z.union([z.literal('end'), z.number().int().min(0)]).optional(),
 });
 
+/** With two values and sameTag forbid, one choice assigns both teams; otherwise each team needs its own. */
+const tagsKnown = (chosenBy: Set<string>, t: z.infer<typeof tagging>) =>
+  chosenBy.size >= (t.sameTag === 'forbid' && t.values?.length === 2 ? 1 : 2);
+
 export const presetSchema = z
   .object({
     version: z.literal(1),
@@ -88,9 +92,11 @@ export const presetSchema = z
     }
 
     const last = p.steps.length - 1;
+    const chosenBy = new Set<string>();
     p.steps.forEach((s, i) => {
       const at = (f: string) => ['steps', i, f];
       if (s.action === 'choose') {
+        chosenBy.add(s.team);
         if (t.assignment !== 'chosen') bad(at('action'), '"choose" needs tagging.assignment "chosen"');
         else if (s.tag !== t.tag) bad(at('tag'), `must equal tagging.tag "${t.tag}"`);
         if (s.pool) bad(at('pool'), 'not allowed for "choose"');
@@ -104,6 +110,7 @@ export const presetSchema = z
         if (s.tag) bad(at('tag'), 'only allowed for "choose"');
         if (s.restrict) {
           if (t.assignment === 'none') bad(at('restrict'), 'needs tagging.assignment "chosen" or "fixed"');
+          else if (t.assignment === 'chosen' && !tagsKnown(chosenBy, t)) bad(at('restrict'), 'needs the tag to be chosen by an earlier "choose" step');
         }
         if (s.blind && s.action !== 'pick') bad(at('blind'), 'only allowed on "pick"');
       }

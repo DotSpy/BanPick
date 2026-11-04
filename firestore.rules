@@ -76,7 +76,8 @@ service cloud.firestore {
           resource.data.phase == 'drafting' &&
           resource.data.deadline != null &&
           resource.data.deadline <= request.time.toMillis() &&
-          request.resource.data.turnIndex > resource.data.turnIndex &&
+          request.resource.data.turnIndex >= resource.data.turnIndex &&
+          (request.resource.data.turnIndex > resource.data.turnIndex || request.resource.data.deadline != resource.data.deadline) &&
           request.resource.data.ownerA == resource.data.ownerA &&
           request.resource.data.ownerB == resource.data.ownerB &&
           stateKeysOnly()

@@ -39,5 +39,5 @@ export function renameSeat(s: DraftState, team: Team, name: string): string | nu
 
 /** Frees a lobby seat so the link can claim it again. */
 export function freeSeat(s: DraftState, team: Team): void {
-  Object.assign(s.teams[team], { owner: null, connected: false, ready: false, captain: null });
+  Object.assign(s.teams[team], { name: `Team ${team}`, owner: null, connected: false, ready: false, captain: null });
 }
