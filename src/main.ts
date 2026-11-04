@@ -8,7 +8,7 @@ import { Room } from './room/room';
 import { firestoreDraftStore } from './room/firestore';
 import { mountRoom } from './room/view';
 import { parseRoute, roomHash } from './route';
-import { builtinPresets } from './warno/preset';
+import { builtinPresets } from './builtins';
 import type { Preset } from './model';
 
 const root = document.getElementById('app')!;
