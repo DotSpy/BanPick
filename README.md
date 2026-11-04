@@ -58,7 +58,7 @@ Blind picks are hidden **in the UI only**. The draft state, including blind choi
 - `presets/{id}`: preset JSON string plus `ownerUid`, `createdAt`, `updatedAt`. Read by id only (no list queries). Only the creator (anonymous uid) can update; this is enforced in `firestore.rules` and in `savePreset`. Presets cannot be deleted.
 - `drafts/{id}`: seats are bound to the uid that claimed them. Rules check seat ownership and phase transitions; move legality is enforced by the client engine and re-verified on load.
 - Presets can also be shared without a database through the compressed link produced by the builder (`#<code>`).
-- The Firestore adapters and `firestore.rules` are **not covered by automated tests**. The Firestore emulator needs a Java runtime, which is not available in the development environment used so far (checked 2026-11-04: no `java` on PATH). To test the rules, install a JDK and run them with `@firebase/rules-unit-testing` against the emulator. Until then verify them manually.
+- The Firestore **security rules are tested against the emulator**: `npm run test:rules` (35 tests in `rules-tests/`). It needs a **HotSpot JDK 21+ on PATH or `JAVA_HOME`** (for example Corretto or Temurin). OpenJ9/Semeru does not work: the emulator fails with a 500 when loading rules. The first run downloads the emulator jar. The rules tests are separate from `npm test`, which needs no Java. The Firestore adapters (`src/persist/firestore.ts`, `src/room/firestore.ts`) are still not covered by automated tests.
 
 ### Firestore free-tier (Spark) quotas
 
@@ -88,7 +88,8 @@ No undo/redo, no series (multi-game) logic, no preset deletion, no server-side h
 
 ```
 npm install
-npm test        # vitest
+npm test        # vitest (unit and view tests, no Java needed)
+npm run test:rules  # Firestore rules against the emulator (needs a HotSpot JDK 21+)
 npx tsc --noEmit
 npx vite        # builder UI
 ```
