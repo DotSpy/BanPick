@@ -2,6 +2,15 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 1rem auto; max-width: 56rem; padding: 0 1rem; }
+      input, select, textarea, button { font: inherit; margin: 0.15rem; }
+      textarea.json { width: 100%; min-height: 10rem; }
+      .items button { padding: 0.4rem 0.7rem; } .items button.selected { outline: 3px solid #06c; }
+      .errors, .json-error, .integrity { color: #b00020; } .hint { color: #555; }
+      .links input { width: 70%; }
+    </style>
     <title>BanPick builder</title>
   </head>
   <body>

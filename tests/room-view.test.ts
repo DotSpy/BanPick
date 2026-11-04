@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { Room } from '../src/room/room';
 import { mountRoom } from '../src/room/view';
-import { parseRoute, roomHash } from '../src/route';
+import { parseRoute, roomHash, roomLinks } from '../src/route';
 import { memoryDraftStore } from './memory-store';
 import { makePreset, step } from './fixtures';
 
@@ -17,6 +17,22 @@ describe('route parsing', () => {
 
   it('treats anything else as a builder share code', () => {
     expect(parseRoute('#abc123')).toEqual({ kind: 'builder', code: 'abc123' });
+  });
+
+  it('rejects an unknown seat instead of silently watching', () => {
+    expect(parseRoute('#room/r1/p/captian')).toMatchObject({ kind: 'invalid', reason: expect.stringContaining('captian') });
+  });
+
+  it('rejects an incomplete room link', () => {
+    expect(parseRoute('#room/r1').kind).toBe('invalid');
+  });
+
+  it('builds a link per seat', () => {
+    expect(roomLinks('http://h/', 'r', 'p').map((l) => [l.label, l.url])).toEqual([
+      ['Captain A', 'http://h/#room/r/p/A'],
+      ['Captain B', 'http://h/#room/r/p/B'],
+      ['Spectator', 'http://h/#room/r/p/spec'],
+    ]);
   });
 
   it('round-trips a room hash', () => {
@@ -111,6 +127,104 @@ describe('room view', () => {
 
     expect(root.querySelector('.integrity')?.textContent).toBe('Entry 1 is illegal');
     dispose();
+  });
+});
+
+describe('room view guidance', () => {
+  const room = async (uid: string, want: 'A' | 'B' | null, preset = makePreset([step('A', 'pick', 'maps', { blind: true }), step('B', 'ban', 'maps')])) => {
+    const { store } = memoryDraftStore();
+    const r = new Room({ store, roomId: 'r', preset, uid, now: () => 1000 });
+    await r.open(want);
+    return r;
+  };
+  const view = (r: Room, now?: () => number) => {
+    const root = document.createElement('div');
+    const dispose = mountRoom(root, r, now);
+    return { root, dispose };
+  };
+  const started = async (preset = makePreset([step('A', 'pick', 'maps', { blind: true }), step('B', 'ban', 'maps', { timer: 30 })])) => {
+    const { store } = memoryDraftStore();
+    const mk = (uid: string) => new Room({ store, roomId: 'r', preset, uid, now: () => 1000 });
+    const [a, b, spec] = [mk('ua'), mk('ub'), mk('us')];
+    await a.open('A');
+    await b.open('B');
+    await spec.open(null);
+    await a.setReady(true);
+    await b.setReady(true);
+    return { a, b, spec };
+  };
+
+  it('tells a captain which team they are', async () => {
+    const { root } = view(await room('ua', 'A'));
+
+    expect(root.querySelector('.role')!.textContent).toBe('You are Captain A');
+  });
+
+  it('tells a spectator they are watching', async () => {
+    const { root } = view(await room('us', null));
+
+    expect(root.querySelector('.role')!.textContent).toBe('You are watching');
+  });
+
+  it('explains how the lobby ends', async () => {
+    const { root } = view(await room('ua', 'A'));
+
+    expect(root.querySelector('.hint')!.textContent).toMatch(/both captains are ready/);
+  });
+
+  it('describes the turn in words, including blind', async () => {
+    const { a } = await started();
+    const { root } = view(a);
+
+    expect(root.querySelector('.turn')!.textContent).toBe('Team A to pick maps (blind)');
+  });
+
+  it('tells the waiting captain whose turn it is', async () => {
+    const { b } = await started();
+    const { root } = view(b);
+
+    expect(root.querySelector('.hint')!.textContent).toBe('Waiting for Team A\u2026');
+  });
+
+  it('shows no waiting hint on your own turn', async () => {
+    const { a } = await started();
+    const { root } = view(a);
+
+    expect(root.querySelector('.hint')).toBeNull();
+  });
+
+  it('announces turn changes politely and keeps the countdown outside the live region', async () => {
+    const { a, b } = await started();
+    await a.act('map-1');
+    const { root } = view(b);
+
+    const live = root.querySelector('.turn [role=status]')!;
+
+    expect([live.textContent, live.textContent!.includes('30')]).toEqual(['Team B to ban maps', false]);
+  });
+
+  it('updates the countdown every second without rebuilding the turn element', async () => {
+    const { a, b } = await started();
+    await a.act('map-1');
+    let t = 1000;
+    const { root, dispose } = view(b, () => t);
+    const turnEl = root.querySelector('.turn')!;
+    const before = root.querySelector('.timer')!.textContent;
+
+    t += 5000;
+    await new Promise((r) => setTimeout(r, 1100));
+
+    expect([root.querySelector('.turn') === turnEl, root.querySelector('.timer')!.textContent === before]).toEqual([true, false]);
+    dispose();
+  });
+
+  it('shows an image on items that have one', async () => {
+    const preset = makePreset([step('A', 'ban', 'maps')]);
+    preset.pools.maps.items[0].image = 'https://x.test/m.png';
+    const { a } = await started(preset);
+    const { root } = view(a);
+
+    expect(root.querySelector('.items img')?.getAttribute('src')).toBe('https://x.test/m.png');
   });
 });
 

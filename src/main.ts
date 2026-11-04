@@ -1,5 +1,6 @@
 import { newPreset } from './builder/edit';
-import { mountBuilder, presetFromHash } from './builder/view';
+import { mountBuilder, presetFromHash, type SaveResult } from './builder/view';
+import { mountLauncher } from './launcher';
 import { h } from './dom';
 import { currentUid, db } from './firebase';
 import { firestorePresetStore } from './persist/firestore';
@@ -7,12 +8,12 @@ import { loadPreset, savePreset } from './persist/presets';
 import { Room } from './room/room';
 import { firestoreDraftStore } from './room/firestore';
 import { mountRoom } from './room/view';
-import { parseRoute, roomHash } from './route';
+import { parseRoute, roomLinks } from './route';
 import { builtinPresets } from './builtins';
 import type { Preset } from './model';
 
 const root = document.getElementById('app')!;
-const show = (text: string) => root.replaceChildren(h('p', { textContent: text }));
+const show = (text: string) => root.replaceChildren(h('p', { role: 'alert', textContent: text }), h('a', { href: location.pathname, textContent: 'Back to the builder' }));
 const shortId = () => crypto.randomUUID().slice(0, 8);
 
 async function resolvePreset(ref: string): Promise<Preset | string> {
@@ -29,23 +30,31 @@ async function openRoom(roomId: string, presetRef: string, seat: 'A' | 'B' | nul
   if (typeof preset === 'string') return show(preset);
   const room = new Room({ store: firestoreDraftStore(db), roomId, preset, uid: await currentUid(), now: Date.now });
   await room.open(seat);
+  document.title = `${preset.name} \u00b7 BanPick`;
   mountRoom(root, room);
 }
 
 async function openBuilder(code: string) {
   const initial = (await presetFromHash(code)) ?? newPreset();
+  const launcherEl = h('div');
+  const builderEl = h('div');
+  root.replaceChildren(launcherEl, builderEl);
   const firestore = db;
   const onSave = firestore
-    ? async (p: Preset) => {
+    ? async (p: Preset): Promise<SaveResult> => {
         const session = { uid: await currentUid(), now: Date.now, newId: shortId };
         const r = await savePreset(firestorePresetStore(firestore), session, p);
-        alert(r.ok ? `Saved. Captain A link: ${location.origin}${location.pathname}${roomHash(shortId(), r.value, 'A')}` : r.error);
+        return r.ok ? { ok: true, links: roomLinks(base(), shortId(), r.value) } : { ok: false, error: r.error };
       }
     : undefined;
-  mountBuilder(root, initial, onSave && ((p) => void onSave(p)));
+  const builder = mountBuilder(builderEl, initial, onSave);
+  mountLauncher(launcherEl, { presets: builtinPresets, base: base(), newId: shortId, onEditCopy: builder.set });
 }
 
-const route = parseRoute(location.hash);
-const start = route.kind === 'room' ? openRoom(route.roomId, route.presetRef, route.seat) : openBuilder(route.code);
-start.catch((e) => show(String(e)));
+const base = () => location.origin + location.pathname;
 
+const route = parseRoute(location.hash);
+window.addEventListener('hashchange', () => location.reload());
+const start =
+  route.kind === 'room' ? openRoom(route.roomId, route.presetRef, route.seat) : route.kind === 'builder' ? openBuilder(route.code) : Promise.resolve(show(route.reason));
+start.catch((e) => show(String(e)));
