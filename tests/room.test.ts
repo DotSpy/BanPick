@@ -119,6 +119,45 @@ describe('room', () => {
     expect(late.role).toBe('spec');
   });
 
+  it('lets a browser that opened without a seat claim a free one', async () => {
+    const s = setup();
+    const r = await seated(s.room('ua'), null);
+
+    await r.claim('A');
+
+    expect(r.role).toBe('A');
+  });
+
+  it('refuses a claim on a seat another browser holds', async () => {
+    const s = setup();
+    await seated(s.room('ua'), 'A');
+    const late = await seated(s.room('ux'), null);
+
+    await late.claim('A');
+
+    expect([late.role, late.notice]).toEqual(['spec', expect.stringMatching(/already taken/)]);
+  });
+
+  it('restores the seat when the same browser reopens the room', async () => {
+    const s = setup();
+    await seated(s.room('ua'), 'B');
+
+    const again = await seated(s.room('ua'), null);
+
+    expect(again.role).toBe('B');
+  });
+
+  it('frees a seat on release so another browser can claim it', async () => {
+    const s = setup();
+    const a = await seated(s.room('ua'), 'A');
+    const other = await seated(s.room('ux'), null);
+    await a.release();
+
+    await other.claim('A');
+
+    expect([a.role, other.role]).toEqual(['spec', 'A']);
+  });
+
   it('starts the draft when both captains are ready', async () => {
     const s = setup();
 

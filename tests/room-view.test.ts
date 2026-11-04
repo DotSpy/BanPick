@@ -2,41 +2,29 @@
 import { describe, expect, it } from 'vitest';
 import { Room } from '../src/room/room';
 import { mountRoom } from '../src/room/view';
-import { parseRoute, roomHash, roomLinks } from '../src/route';
+import { parseRoute, roomHash, roomLink } from '../src/route';
 import { memoryDraftStore } from './memory-store';
 import { makePreset, step } from './fixtures';
 
 describe('route parsing', () => {
-  it('parses a room link with a seat', () => {
-    expect(parseRoute('#room/r1/builtin-x/B')).toEqual({ kind: 'room', roomId: 'r1', presetRef: 'builtin-x', seat: 'B' });
-  });
-
-  it('treats spec as no seat', () => {
-    expect(parseRoute('#room/r1/p/spec')).toMatchObject({ seat: null });
+  it('parses a room link without a seat', () => {
+    expect(parseRoute('#room/r1/builtin-x')).toEqual({ kind: 'room', roomId: 'r1', presetRef: 'builtin-x' });
   });
 
   it('treats anything else as a builder share code', () => {
     expect(parseRoute('#abc123')).toEqual({ kind: 'builder', code: 'abc123' });
   });
 
-  it('rejects an unknown seat instead of silently watching', () => {
-    expect(parseRoute('#room/r1/p/captian')).toMatchObject({ kind: 'invalid', reason: expect.stringContaining('captian') });
-  });
-
   it('rejects an incomplete room link', () => {
     expect(parseRoute('#room/r1').kind).toBe('invalid');
   });
 
-  it('builds a link per seat', () => {
-    expect(roomLinks('http://h/', 'r', 'p').map((l) => [l.label, l.url])).toEqual([
-      ['Captain A', 'http://h/#room/r/p/A'],
-      ['Captain B', 'http://h/#room/r/p/B'],
-      ['Spectator', 'http://h/#room/r/p/spec'],
-    ]);
+  it('builds one shared link for the room', () => {
+    expect(roomLink('http://h/', 'r', 'p')).toEqual({ label: 'Room link', url: 'http://h/#room/r/p' });
   });
 
   it('round-trips a room hash', () => {
-    expect(parseRoute(roomHash('r', 'p', 'A'))).toMatchObject({ kind: 'room', roomId: 'r', seat: 'A' });
+    expect(parseRoute(roomHash('r', 'p'))).toMatchObject({ kind: 'room', roomId: 'r', presetRef: 'p' });
   });
 });
 
@@ -293,6 +281,80 @@ describe('room view guidance', () => {
     const { root } = view(b);
 
     expect(root.querySelector('.history img')?.getAttribute('src')).toBe('https://x.test/m.png');
+  });
+});
+
+describe('seat choice', () => {
+  const setup = async (taken: ('A' | 'B')[] = []) => {
+    const { store } = memoryDraftStore();
+    const preset = makePreset([step('A', 'ban', 'maps'), step('B', 'ban', 'maps')]);
+    const mk = (uid: string) => new Room({ store, roomId: 'r', preset, uid, now: () => 1000 });
+    for (const t of taken) await mk('u' + t).open(t);
+    const visitor = mk('visitor');
+    await visitor.open(null);
+    const root = document.createElement('div');
+    mountRoom(root, visitor);
+    return { root, visitor };
+  };
+  const labels = (root: HTMLElement) => [...root.querySelectorAll('.seat-choice button')].map((b) => b.textContent);
+  const flush = () => new Promise((r) => setTimeout(r, 0));
+  const press = (root: HTMLElement, label: string) => [...root.querySelectorAll('button')].find((b) => b.textContent === label)!.click();
+
+  it('offers both seats and Watch to a browser without a seat', async () => {
+    const { root } = await setup();
+
+    expect(labels(root)).toEqual(['Team A', 'Team B', 'Watch']);
+  });
+
+  it('shows a taken seat as taken and disabled', async () => {
+    const { root } = await setup(['A']);
+
+    const a = root.querySelector('.seat-choice button') as HTMLButtonElement;
+
+    expect([a.textContent, a.disabled]).toEqual(['Team A (taken)', true]);
+  });
+
+  it('claims the chosen seat', async () => {
+    const { root, visitor } = await setup();
+
+    press(root, 'Team B');
+    await flush();
+
+    expect(visitor.role).toBe('B');
+  });
+
+  it('hides the choice after Watch and keeps the viewer a spectator', async () => {
+    const { root, visitor } = await setup();
+
+    press(root, 'Watch');
+
+    expect([root.querySelector('.seat-choice'), visitor.role]).toEqual([null, 'spec']);
+  });
+
+  it('lets a watcher go back to choosing a seat in the lobby', async () => {
+    const { root } = await setup();
+    press(root, 'Watch');
+
+    press(root, 'Choose a seat');
+
+    expect(root.querySelector('.seat-choice')).not.toBeNull();
+  });
+
+  it('shows no seat choice to a seated captain', async () => {
+    const { root, visitor } = await setup();
+    await visitor.claim('A');
+
+    expect(root.querySelector('.seat-choice')).toBeNull();
+  });
+
+  it('shows the choice again after a captain leaves the seat', async () => {
+    const { root, visitor } = await setup();
+    await visitor.claim('A');
+
+    press(root, 'Leave seat');
+    await flush();
+
+    expect(root.querySelector('.seat-choice')).not.toBeNull();
   });
 });
 

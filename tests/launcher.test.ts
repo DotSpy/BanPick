@@ -52,20 +52,16 @@ describe('launcher', () => {
     expect([...mount().querySelectorAll('option')].map((o) => o.textContent)).toContain('Second');
   });
 
-  it('creates a room with links for both captains and spectators', () => {
+  it('creates a room with one shared link', () => {
     const root = mount();
     (root.querySelector('select') as HTMLSelectElement).value = 'two';
 
     click(root, 'Create room');
 
-    expect([...root.querySelectorAll('.links input')].map((i) => (i as HTMLInputElement).value)).toEqual([
-      'http://h/#room/room1/builtin-two/A',
-      'http://h/#room/room1/builtin-two/B',
-      'http://h/#room/room1/builtin-two/spec',
-    ]);
+    expect([...root.querySelectorAll('.links input')].map((i) => (i as HTMLInputElement).value)).toEqual(['http://h/#room/room1/builtin-two']);
   });
 
-  it('confirms the room was created and who gets which link', () => {
+  it('confirms the room was created and that one link is shared', () => {
     const root = mount();
 
     click(root, 'Create room');

@@ -1,7 +1,7 @@
 import { btn, h } from './dom';
 import type { Link } from './route';
 
-/** Read-only inputs with a copy button each, so every seat link can be handed out. */
+/** Read-only inputs with a copy button each, so the room link can be handed out. */
 export function linksPanel(links: Link[]): HTMLElement {
   return h(
     'div', { className: 'links' },

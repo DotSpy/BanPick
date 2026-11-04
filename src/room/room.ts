@@ -65,6 +65,9 @@ export class Room {
     this.listeners.clear();
   }
 
+  claim(team: Team, name = '') {
+    return this.mutateAndEmit((s) => decideClaim(s, this.d.uid, team, name).refusal);
+  }
   act(itemId: string) {
     return this.seated((s, team, now) => {
       const err = applyPick(s, team, itemId, now, false);
@@ -113,11 +116,15 @@ export class Room {
     }
   }
 
-  private async seated(change: (s: DraftState, team: Team, now: number) => string | null) {
-    this.notice = await this.mutate((s, now) => {
+  private seated(change: (s: DraftState, team: Team, now: number) => string | null) {
+    return this.mutateAndEmit((s, now) => {
       const team = (['A', 'B'] as Team[]).find((t) => s.teams[t].owner === this.d.uid);
       return team ? change(s, team, now) : 'You do not hold a seat';
     });
+  }
+
+  private async mutateAndEmit(change: (s: DraftState, now: number) => string | null) {
+    this.notice = await this.mutate(change);
     this.emit();
   }
 

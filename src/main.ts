@@ -9,7 +9,7 @@ import { loadPreset, savePreset } from './persist/presets';
 import { Room } from './room/room';
 import { firestoreDraftStore } from './room/firestore';
 import { mountRoom } from './room/view';
-import { parseRoute, roomLinks } from './route';
+import { parseRoute, roomLink } from './route';
 import { builtinPresets } from './builtins';
 import type { Preset } from './model';
 
@@ -25,12 +25,12 @@ async function resolvePreset(ref: string): Promise<Preset | string> {
   return r.ok ? r.value : `Could not load preset "${ref}". Check the link, or ask the host for a new one. (${r.error})`;
 }
 
-async function openRoom(roomId: string, presetRef: string, seat: 'A' | 'B' | null) {
+async function openRoom(roomId: string, presetRef: string) {
   if (!db) return show('Firebase is not configured (see README).');
   const preset = await resolvePreset(presetRef);
   if (typeof preset === 'string') return show(preset);
   const room = new Room({ store: firestoreDraftStore(db), roomId, preset, uid: await currentUid(), now: Date.now });
-  await room.open(seat);
+  await room.open(null);
   document.title = `${preset.name} \u00b7 BanPick`;
   mountRoom(root, room);
 }
@@ -45,7 +45,7 @@ async function openBuilder(code: string) {
     ? async (p: Preset): Promise<SaveResult> => {
         const session = { uid: await currentUid(), now: Date.now, newId: shortId };
         const r = await savePreset(firestorePresetStore(firestore), session, p);
-        return r.ok ? { ok: true, links: roomLinks(base(), shortId(), r.value) } : { ok: false, error: r.error };
+        return r.ok ? { ok: true, links: [roomLink(base(), shortId(), r.value)] } : { ok: false, error: r.error };
       }
     : undefined;
   const builder = mountBuilder(builderEl, initial, onSave);
@@ -57,5 +57,5 @@ const base = () => location.origin + location.pathname;
 const route = parseRoute(location.hash);
 window.addEventListener('hashchange', () => location.reload());
 const start =
-  route.kind === 'room' ? openRoom(route.roomId, route.presetRef, route.seat) : route.kind === 'builder' ? openBuilder(route.code) : Promise.resolve(show(route.reason));
+  route.kind === 'room' ? openRoom(route.roomId, route.presetRef) : route.kind === 'builder' ? openBuilder(route.code) : Promise.resolve(show(route.reason));
 start.catch((e) => show(String(e)));

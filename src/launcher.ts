@@ -1,7 +1,7 @@
 import { btn, h } from './dom';
 import { linksPanel } from './links';
 import type { Preset } from './model';
-import { roomLinks } from './route';
+import { roomLink } from './route';
 
 export interface LauncherDeps {
   presets: { id: string; preset: Preset }[];
@@ -18,7 +18,7 @@ export function mountLauncher(root: HTMLElement, d: LauncherDeps) {
   root.replaceChildren(
     h('h2', { textContent: 'Start from a built-in preset' }),
     h('label', {}, 'Preset ', pick),
-    btn('Create room', () => result.replaceChildren(h('p', { className: 'hint', role: 'status', textContent: 'Room created. Send Captain A and Captain B their own link; spectators use the Spectator link.' }), linksPanel(roomLinks(d.base, d.newId(), `builtin-${chosen().id}`)))),
+    btn('Create room', () => result.replaceChildren(h('p', { className: 'hint', role: 'status', textContent: 'Room created. Send everyone this one link; each person chooses Team A, Team B or Watch after opening it.' }), linksPanel([roomLink(d.base, d.newId(), `builtin-${chosen().id}`)]))),
     btn('Edit copy', () => d.onEditCopy(structuredClone(chosen().preset)), { className: 'secondary' }),
     result,
   );

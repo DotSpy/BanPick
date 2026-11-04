@@ -161,6 +161,8 @@ form.name[hidden] { display: none; }
 .seat { display: flex; align-items: center; gap: var(--s-2); padding: var(--s-2) var(--s-3); border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-2); font-weight: 600; }
 .seat.joined { border-color: var(--primary); }
 .seat.ready { border-color: var(--success); background: var(--success-bg); color: var(--success); }
+.seat-choice { margin: var(--s-3) 0; padding: var(--s-3) var(--s-4); border: 1px solid var(--primary); border-radius: var(--radius); background: var(--info-bg); }
+.seat-choice p { margin-top: 0; font-weight: 600; }
 .seat.open { color: var(--muted); border-style: dashed; font-weight: 400; }
 
 .turn { margin: var(--s-4) 0 var(--s-3); padding: var(--s-3) var(--s-4); border-radius: var(--radius); border-left: 6px solid var(--line); background: var(--surface-2); font-size: var(--fs-lg); font-weight: 700; display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-2); }

@@ -2,29 +2,24 @@ import type { Team } from './model';
 
 export type Route =
   | { kind: 'builder'; code: string }
-  | { kind: 'room'; roomId: string; presetRef: string; seat: Team | null }
+  | { kind: 'room'; roomId: string; presetRef: string }
   | { kind: 'invalid'; reason: string };
 
-/** Hash routes: `#room/<roomId>/<presetRef>/<A|B|spec>` opens a room; anything else is a builder share code. */
+/** Hash routes: `#room/<roomId>/<presetRef>` opens a room (one link for everyone); anything else is a builder share code. */
 export function parseRoute(hash: string): Route {
   const raw = hash.replace(/^#/, '');
-  const [kind, roomId, presetRef, seat] = raw.split('/');
+  const [kind, roomId, presetRef] = raw.split('/');
   if (kind !== 'room') return { kind: 'builder', code: raw };
   if (!roomId || !presetRef) return { kind: 'invalid', reason: 'This room link is incomplete.' };
-  if (seat !== 'A' && seat !== 'B' && seat !== 'spec') return { kind: 'invalid', reason: `Unknown seat "${seat ?? ''}" in this room link. Use A, B or spec.` };
-  return { kind: 'room', roomId, presetRef, seat: seat === 'spec' ? null : seat };
+  return { kind: 'room', roomId, presetRef };
 }
 
-export const roomHash = (roomId: string, presetRef: string, seat: Team | 'spec') => `#room/${roomId}/${presetRef}/${seat}`;
+export const roomHash = (roomId: string, presetRef: string) => `#room/${roomId}/${presetRef}`;
 
 export interface Link {
   label: string;
   url: string;
 }
 
-/** One link per seat of a room, ready to hand out. */
-export const roomLinks = (base: string, roomId: string, presetRef: string): Link[] => [
-  { label: 'Captain A', url: base + roomHash(roomId, presetRef, 'A') },
-  { label: 'Captain B', url: base + roomHash(roomId, presetRef, 'B') },
-  { label: 'Spectator', url: base + roomHash(roomId, presetRef, 'spec') },
-];
+/** The single link to share; each browser picks its seat after opening it. */
+export const roomLink = (base: string, roomId: string, presetRef: string): Link => ({ label: 'Room link', url: base + roomHash(roomId, presetRef) });

@@ -13,6 +13,8 @@ export interface RoomPort {
   subscribe(fn: () => void): () => void;
   act(itemId: string): Promise<void>;
   select(itemId: string | null): Promise<void>;
+  claim(team: Team): Promise<void>;
+  release(): Promise<void>;
   setReady(ready: boolean): Promise<void>;
   confirmNext(): Promise<void>;
   setName(name: string): Promise<void>;
@@ -40,6 +42,15 @@ function itemButton(s: DraftState, id: string, disabled: boolean, selected: bool
   return h('button', { type: 'button', disabled, className: selected ? 'selected' : '', ariaPressed: String(selected), onclick: onClick }, itemIcon(item), item?.name ?? id);
 }
 
+/** Seat choice for a browser without a seat: free seats can be claimed, taken ones are disabled, Watch is always available. */
+function seatChoice(s: DraftState, room: RoomPort, onWatch: () => void) {
+  const seat = (t: Team) => {
+    const taken = !!s.teams[t].owner;
+    return btn(taken ? `Team ${t} (taken)` : `Team ${t}`, () => void room.claim(t), { disabled: taken || s.phase !== 'lobby' });
+  };
+  return h('div', { className: 'seat-choice' }, h('p', { className: 'hint', textContent: 'Choose your seat:' }), seat('A'), seat('B'), btn('Watch', onWatch, { className: 'secondary' }));
+}
+
 /** Captain-name form. It lives outside the re-rendered content so typing is not lost on live updates. */
 function nameForm(room: RoomPort) {
   const input = h('input', { type: 'text', maxLength: 30, placeholder: 'Captain name' }) as HTMLInputElement;
@@ -65,6 +76,7 @@ export function mountRoom(root: HTMLElement, room: RoomPort, now: () => number =
   const nameBox = nameForm(room);
   root.replaceChildren(nameBox.el, content);
 
+  let watching = false;
   let timerEl: HTMLElement | null = null;
   const showTimer = () => {
     const left = room.state ? secondsLeft(room.state, now()) : null;
@@ -88,13 +100,15 @@ export function mountRoom(root: HTMLElement, room: RoomPort, now: () => number =
     ];
     if (room.integrity) body.push(h('p', { className: 'integrity', textContent: room.integrity }));
     if (room.notice) body.push(h('p', { className: 'notice', textContent: room.notice }));
+    if (!viewer && !watching) body.push(seatChoice(s, room, () => { watching = true; render(); }));
+    if (!viewer && watching && s.phase === 'lobby') body.push(btn('Choose a seat', () => { watching = false; render(); }, { className: 'secondary' }));
 
     if (s.phase === 'lobby') {
       for (const t of ['A', 'B'] as Team[]) {
         body.push(h('p', { className: `seat ${s.teams[t].ready ? 'ready' : s.teams[t].owner ? 'joined' : 'open'}`, textContent: `Team ${t}: ${s.teams[t].owner ? s.teams[t].name : 'open'}${s.teams[t].ready ? ' (ready)' : ''}` }));
       }
       body.push(h('p', { className: 'hint', textContent: 'The draft starts when both captains are ready.' }));
-      if (viewer) body.push(btn(s.teams[viewer].ready ? 'Not ready' : 'Ready', () => void room.setReady(!s.teams[viewer].ready)));
+      if (viewer) body.push(btn(s.teams[viewer].ready ? 'Not ready' : 'Ready', () => void room.setReady(!s.teams[viewer].ready)), btn('Leave seat', () => void room.release(), { className: 'secondary' }));
     } else if (s.phase === 'drafting' && turn) {
       const status = s.pausing ? 'Paused' : s.confirm ? 'Waiting for both captains to confirm' : `${s.teams[turn.team].name} ${describeTurn(turn)}`;
       timerEl = h('span', { className: 'timer' });
