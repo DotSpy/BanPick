@@ -38,7 +38,7 @@ describe('global pool', () => {
   });
 });
 
-describe('perTeam pool', () => {
+describe('shared pool', () => {
   const steps = () => [step('A', 'ban', 'divisions'), step('B', 'pick', 'divisions'), step('A', 'pick', 'divisions'), step('B', 'pick', 'divisions')];
 
   it('a ban removes the item from the opponent only', () => {
@@ -91,7 +91,7 @@ describe('restrict', () => {
     expect(applyPick(s, 'A', 'gd', 0, false)).toBe('Item not available');
   });
 
-  it('a ban on a perTeam pool is limited to the opponent tag value', () => {
+  it('a ban on a shared pool is limited to the opponent tag value', () => {
     const s = started(sided([step('A', 'ban', 'divisions', { restrict: 'tag' })]));
 
     applyPick(s, 'A', 'nato', 0, false);

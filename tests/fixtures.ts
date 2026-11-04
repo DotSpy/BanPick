@@ -3,7 +3,7 @@ import type { Preset, Step } from '../src/model';
 
 export const items = (...ids: string[]) => ids.map((id) => ({ id, name: id }));
 
-/** A fresh preset on every call (tests never share mutable data). Divisions carry a `side` tag and are perTeam. */
+/** A fresh preset on every call (tests never share mutable data). Divisions carry a `side` tag and are shared. */
 export function makePreset(steps: Step[], over: Partial<Preset> = {}): Preset {
   return {
     version: 1,
@@ -12,7 +12,7 @@ export function makePreset(steps: Step[], over: Partial<Preset> = {}): Preset {
     pools: {
       maps: { items: items('map-1', 'map-2', 'map-3') },
       divisions: {
-        scope: 'perTeam',
+        scope: 'shared',
         items: [
           { id: 'cav', name: 'cav', tags: { side: 'nato' } },
           { id: 'ranger', name: 'ranger', tags: { side: 'nato' } },

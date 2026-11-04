@@ -23,7 +23,7 @@ const item = z.object({
   tags: z.record(z.string(), tagValue).optional(),
 });
 
-const pool = z.object({ items: z.array(item).min(1).max(500), scope: z.enum(['global', 'perTeam']).optional() });
+const pool = z.object({ items: z.array(item).min(1).max(500), scope: z.enum(['global', 'shared', 'exclusive']).optional() });
 
 const tagging = z.object({
   assignment: z.enum(['chosen', 'fixed', 'none']),

@@ -10,8 +10,8 @@ export interface Item {
 
 export interface Pool {
   items: Item[];
-  /** global: any pick or ban removes the item for everyone (default). perTeam: a pick removes it for that team only; a ban removes it from the opponent's options. */
-  scope?: 'global' | 'perTeam';
+  /** global: any pick or ban removes the item for everyone (default). shared: each team has its own pool; a pick removes it for that team only. exclusive: like shared, but a pick removes it for both teams. In both, a ban removes it from the opponent's options only. */
+  scope?: 'global' | 'shared' | 'exclusive';
 }
 
 export interface Tagging {
@@ -35,7 +35,7 @@ export interface Step {
   timer?: number;
   /** Seconds of timed pause before the step, or 'ready' to wait for both captains. */
   pause?: number | 'ready';
-  /** Item must match the tag value of the team that owns the choice (the opponent for a perTeam ban). */
+  /** Item must match the tag value of the team that owns the choice (the opponent for a ban on a non-global pool). */
   restrict?: 'tag';
   /** Choice hidden from the opponent until `reveal`. */
   blind?: boolean;

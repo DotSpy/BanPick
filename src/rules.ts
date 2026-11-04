@@ -26,9 +26,9 @@ export function tagsOf({ preset, history }: Ctx): TagAssignment {
   return tags;
 }
 
-/** The team whose tag and options a turn concerns: the opponent for a ban on a perTeam pool, else the acting team. */
+/** The team whose tag and options a turn concerns: the opponent for a ban on a non-global pool, else the acting team. */
 export function ownerOf(preset: Preset, turn: Turn): Team {
-  return turn.action === 'ban' && preset.pools[turn.target]?.scope === 'perTeam' ? otherTeam(turn.team) : turn.team;
+  return turn.action === 'ban' && (preset.pools[turn.target]?.scope ?? 'global') !== 'global' ? otherTeam(turn.team) : turn.team;
 }
 
 /** Candidate item ids of a turn, before any availability rule. */
@@ -50,11 +50,12 @@ export function isAvailable(ctx: Ctx, turn: Turn, itemId: string): boolean {
     const item = preset.pools[turn.target].items.find((i) => i.id === itemId)!;
     if (tags[owner] === null || item.tags?.[preset.tagging.tag!] !== tags[owner]) return false;
   }
-  const perTeam = preset.pools[turn.target].scope === 'perTeam';
+  const scope = preset.pools[turn.target].scope ?? 'global';
   return !history.some((e) => {
     if (e.action === 'choose' || e.target !== turn.target || e.itemId !== itemId) return false;
-    if (!perTeam) return true;
-    return e.action === 'ban' ? e.team !== owner : e.team === owner;
+    if (scope === 'global') return true;
+    if (e.action === 'ban') return e.team !== owner;
+    return scope === 'exclusive' || e.team === owner;
   });
 }
 

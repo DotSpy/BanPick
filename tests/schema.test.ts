@@ -8,7 +8,7 @@ const warnoLike = (): any => ({
   tagging: { assignment: 'chosen', tag: 'side', values: ['nato', 'pact'], sameTag: 'forbid' },
   pools: {
     maps: { items: [{ id: 'm1', name: 'Hill', image: 'https://x.test/a.png' }, { id: 'm2', name: 'Lake' }, { id: 'm3', name: 'Town' }] },
-    divisions: { scope: 'perTeam', items: [{ id: 'cav', name: '1 CAV', tags: { side: 'nato' } }, { id: 'gd', name: 'GD', tags: { side: 'pact' } }] },
+    divisions: { scope: 'shared', items: [{ id: 'cav', name: '1 CAV', tags: { side: 'nato' } }, { id: 'gd', name: 'GD', tags: { side: 'pact' } }] },
   },
   steps: [
     { team: 'A', action: 'choose', tag: 'side' },
