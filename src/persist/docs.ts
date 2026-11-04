@@ -1,0 +1,74 @@
+import type { DraftState } from '../draft';
+import { verifyState } from '../draft';
+import type { Preset } from '../model';
+import { validatePreset, type ValidationError } from '../schema';
+
+/** Document shapes and their conversions. Pure: no Firestore import, so the rules here are unit-testable. */
+
+export interface PresetDoc {
+  preset: string;
+  ownerUid: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface DraftDoc {
+  ownerA: string | null;
+  ownerB: string | null;
+  phase: DraftState['phase'];
+  deadline: number | null;
+  turnIndex: number;
+  state: string;
+  updatedAt: number;
+}
+
+export type Loaded<T> = { ok: true; value: T } | { ok: false; error: string };
+
+export const describeErrors = (errors: ValidationError[]) => errors.map((e) => `${e.path || 'preset'}: ${e.message}`).join('; ');
+
+// The preset is stored as a JSON string: Firestore rejects undefined values and reorders nothing it should not.
+export function presetToDoc(preset: Preset, ownerUid: string, now: number, createdAt = now): PresetDoc {
+  return { preset: JSON.stringify(preset), ownerUid, createdAt, updatedAt: now };
+}
+
+/** Stored presets are validated again on load, so a hand-edited document cannot reach the engine. */
+export function presetFromDoc(doc: PresetDoc): Loaded<Preset> {
+  let data: unknown;
+  try {
+    data = JSON.parse(doc.preset);
+  } catch {
+    return { ok: false, error: 'Stored preset is not valid JSON' };
+  }
+  const r = validatePreset(data);
+  return r.ok ? { ok: true, value: r.preset } : { ok: false, error: describeErrors(r.errors) };
+}
+
+export const canEditPreset = (doc: Pick<PresetDoc, 'ownerUid'>, uid: string | null) => uid !== null && doc.ownerUid === uid;
+
+// Top-level fields exist only so security rules can inspect seats, phase and deadline.
+export function draftToDoc(s: DraftState, now: number): DraftDoc {
+  return {
+    ownerA: s.teams.A.owner,
+    ownerB: s.teams.B.owner,
+    phase: s.phase,
+    deadline: s.deadline,
+    turnIndex: s.turnIndex,
+    state: JSON.stringify(s),
+    updatedAt: now,
+  };
+}
+
+/** A stored draft is only accepted if its preset is valid and its history is a legal outcome of the rules. */
+export function draftFromDoc(doc: DraftDoc): Loaded<DraftState> {
+  let state: DraftState;
+  try {
+    state = JSON.parse(doc.state);
+  } catch {
+    return { ok: false, error: 'Stored draft is not valid JSON' };
+  }
+  const preset = validatePreset(state.preset);
+  if (!preset.ok) return { ok: false, error: describeErrors(preset.errors) };
+  state.preset = preset.preset;
+  const problem = verifyState(state);
+  return problem ? { ok: false, error: problem } : { ok: true, value: state };
+}
