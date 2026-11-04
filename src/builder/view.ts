@@ -1,9 +1,9 @@
 import type { Preset, Step } from '../model';
 import { validatePreset } from '../schema';
 import * as E from './edit';
-import { draftOrder } from './preview';
 import { btn, h } from '../dom';
 import { itemIcon } from '../icon';
+import { timeline } from '../timeline';
 import { linksPanel } from '../links';
 import type { Link } from '../route';
 import { decodePreset, encodePreset } from './share';
@@ -136,7 +136,7 @@ export function mountBuilder(root: HTMLElement, initial: Preset, onSave?: (p: Pr
       h('ol', {}, ...preset.steps.map(stepRow)),
       btn('Add step', () => update(E.addStep(preset)), { className: 'secondary' }),
       h('h3', {}, 'Draft order'),
-      h('ol', { className: 'order' }, ...draftOrder(preset).map((r) => h('li', { textContent: `${r.team}: ${r.text}${r.timer ? ` · ${r.timer}s` : ''}` }))),
+      timeline(preset),
       h('ul', { className: 'errors' }, ...errors.map((e) => h('li', { textContent: `${e.path || 'preset'}: ${e.message}` }))),
       h('label', { className: 'field', textContent: 'Preset JSON (advanced)' }),
       h('textarea', { className: 'json', ariaLabel: 'Preset JSON', ariaInvalid: String(!!jsonError), value: jsonDraft ?? JSON.stringify(preset, null, 2), onchange: (e: Event) => { const v = (e.target as HTMLTextAreaElement).value; later(() => importJson(v)); } }),

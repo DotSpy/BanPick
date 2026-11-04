@@ -16,7 +16,7 @@ describe('builder view', () => {
   it('renders the draft order preview', () => {
     const { root } = mount();
 
-    expect(root.querySelectorAll('.order li')).toHaveLength(1);
+    expect(root.querySelectorAll('.timeline li')).toHaveLength(1);
   });
 
   it('labels the preset name, step timer and JSON fields visibly', () => {
@@ -32,7 +32,7 @@ describe('builder view', () => {
 
     clickButton(root, 'Add step');
 
-    expect(root.querySelectorAll('.order li')).toHaveLength(2);
+    expect(root.querySelectorAll('.timeline li')).toHaveLength(2);
   });
 
   it('shows no errors for a valid preset', () => {

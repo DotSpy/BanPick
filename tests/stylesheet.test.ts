@@ -12,7 +12,7 @@ describe('stylesheet', () => {
   it('styles the classes the views render', () => {
     const css = read('../src/styles.css');
 
-    const missing = ['.items', '.selected', '.turn', '.timer', '.role', '.errors', '.links', '.hint', '.seat', '.error-box', '.secondary', '.history', '.row'].filter((c) => !css.includes(c));
+    const missing = ['.items', '.selected', '.turn', '.timer', '.role', '.errors', '.links', '.hint', '.seat', '.error-box', '.secondary', '.history', '.row', '.timeline', '.tl'].filter((c) => !css.includes(c));
 
     expect(missing).toEqual([]);
   });

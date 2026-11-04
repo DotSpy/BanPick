@@ -132,9 +132,9 @@ section h3 { margin-top: 0; }
 ol, ul { margin: var(--s-2) 0; padding-left: 0; list-style: none; }
 .row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); padding: var(--s-2) 0; border-bottom: 1px solid var(--line); }
 .row:last-child { border-bottom: 0; }
-.order, .history { counter-reset: n; }
-.order li, .history li { counter-increment: n; padding: var(--s-1) 0; }
-.order li::before, .history li::before { content: counter(n) '. '; color: var(--muted); font-variant-numeric: tabular-nums; }
+.history { counter-reset: n; }
+.history li { counter-increment: n; padding: var(--s-1) 0; }
+.history li::before { content: counter(n) '. '; color: var(--muted); font-variant-numeric: tabular-nums; }
 .errors { color: var(--danger); }
 .errors:empty { display: none; }
 .json-error { color: var(--danger); font-weight: 600; }
@@ -208,4 +208,33 @@ button.commit:hover:not(:disabled) { background: #0f5223; border-color: #0f5223;
 
 @media (prefers-reduced-motion: no-preference) {
   button, .seat, .turn { transition: background-color 0.15s, border-color 0.15s; }
+}
+
+/* Timeline: one chip per turn, coloured by team, with action colour, current outline and dimmed upcoming turns. */
+.timeline { display: flex; flex-wrap: wrap; gap: var(--s-1); margin: var(--s-3) 0; padding: 0; list-style: none; }
+.tl { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; width: 5.5rem; min-height: 4rem; padding: var(--s-1) var(--s-2); border: 2px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); font-size: 0.75rem; line-height: 1.2; text-align: center; }
+.tl::before { content: none; }
+.tl-head { display: flex; gap: var(--s-1); align-items: baseline; }
+.tl-head b { font-size: var(--fs-sm); }
+.tl-head i { font-style: normal; font-weight: 700; letter-spacing: 0.04em; }
+.tl-body { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tl-meta { color: var(--muted); font-size: 0.6875rem; }
+.tl .icon-img, .tl .icon-fallback { width: 28px; height: 28px; margin: 0; }
+.tl.team-A { border-color: var(--team-a); }
+.tl.team-A b { color: var(--team-a); }
+.tl.team-B { border-color: var(--team-b); }
+.tl.team-B b { color: var(--team-b); }
+.tl.ban { background: var(--danger-bg); }
+.tl.ban .tl-head i { color: var(--danger); }
+.tl.pick, .tl.choose { background: var(--success-bg); }
+.tl.pick .tl-head i, .tl.choose .tl-head i { color: var(--success); }
+.tl.upcoming { border-style: dashed; opacity: 0.75; }
+.tl.skipped { border-style: dashed; text-decoration: line-through; color: var(--muted); }
+.tl.current { opacity: 1; box-shadow: 0 0 0 3px var(--focus); font-weight: 700; }
+.tl.pause { border: 2px dashed #7c3aed; background: #f1eafe; color: #5b21b6; }
+.tl.pause.done { opacity: 0.6; }
+@media (max-width: 40rem) {
+  .timeline { flex-direction: column; flex-wrap: nowrap; }
+  .tl { flex-direction: row; justify-content: flex-start; width: auto; min-height: var(--tap); padding: var(--s-2) var(--s-3); text-align: left; }
+  .tl-body { flex: 1; }
 }

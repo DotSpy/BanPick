@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { decodePreset, encodePreset } from '../src/builder/share';
-import { draftOrder } from '../src/builder/preview';
 import { newPreset } from '../src/builder/edit';
-import { expandSteps } from '../src/turns';
 import { builtinPresets } from '../src/warno/preset';
 
 describe('share link codec', () => {
@@ -28,23 +26,5 @@ describe('share link codec', () => {
     const bad = await encodePreset({ ...newPreset(), steps: [] });
 
     expect((await decodePreset(bad)).ok).toBe(false);
-  });
-});
-
-describe('draft order preview', () => {
-  it('lists one row per turn, numbered from 1', () => {
-    const rows = draftOrder(newPreset());
-
-    expect(rows.map((r) => r.n)).toEqual([1]);
-  });
-
-  it('describes action and target', () => {
-    expect(draftOrder(newPreset())[0]).toMatchObject({ team: 'A', text: 'ban items' });
-  });
-
-  it('expands counted steps like the engine for built-ins', () => {
-    const { preset } = builtinPresets[0];
-
-    expect(draftOrder(preset)).toHaveLength(expandSteps(preset.steps).length);
   });
 });

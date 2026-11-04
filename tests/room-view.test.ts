@@ -181,6 +181,13 @@ describe('room view guidance', () => {
     expect(root.querySelector('.hint')).toBeNull();
   });
 
+  it('shows the timeline of all turns with the current one marked', async () => {
+    const { a } = await started();
+    const { root } = view(a);
+
+    expect([root.querySelectorAll('.timeline li').length, root.querySelectorAll('.timeline li.current').length]).toEqual([2, 1]);
+  });
+
   it('marks the turn as mine for the captain on the clock', async () => {
     const { a } = await started();
     const { root } = view(a);

@@ -9,7 +9,8 @@ A generic pick/ban draft platform. A draft is described entirely by a **preset**
 | `src/model.ts` | Preset and draft types (no logic) |
 | `src/schema.ts` | Preset validation (zod), field-path errors; single source of truth for builder, import and load |
 | `src/turns.ts`, `src/rules.ts`, `src/draft.ts` | Engine: step expansion, availability and tag rules, turn/timer/pause state machine, replay verification |
-| `src/builder/` | Builder UI: pure edit operations, draft-order preview, share-link codec, DOM view |
+| `src/builder/` | Builder UI: pure edit operations, share-link codec, DOM view |
+| `src/timeline.ts` | Timeline view shared by the builder preview and the room: every turn in order, marked done, current, skipped or upcoming, with who acted and what was chosen (blind picks stay hidden until reveal) |
 | `src/persist/` | Documents, store port and use cases, Firestore adapter |
 | `src/warno/` | WARNO data and the function that turns it into presets |
 | `firestore.rules` | Security rules for `presets` and `drafts` |

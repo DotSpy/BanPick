@@ -2,7 +2,8 @@ import { btn, h } from '../dom';
 import { currentTurn, type DraftState } from '../draft';
 import type { Team, Turn } from '../model';
 import { itemIcon } from '../icon';
-import { availableList, visibleHistory } from '../rules';
+import { timeline } from '../timeline';
+import { availableList, findItem, visibleHistory } from '../rules';
 
 /** What the view needs from a room; `Room` satisfies it. */
 export interface RoomPort {
@@ -21,13 +22,7 @@ export interface RoomPort {
   tick(): Promise<void>;
 }
 
-const itemOf = (s: DraftState, id: string) => {
-  for (const pool of Object.values(s.preset.pools)) {
-    const item = pool.items.find((i) => i.id === id);
-    if (item) return item;
-  }
-  return undefined;
-};
+const itemOf = (s: DraftState, id: string) => findItem(s.preset, id);
 const nameOf = (s: DraftState, id: string) => itemOf(s, id)?.name ?? id;
 
 const describeTurn = (t: Turn) => {
@@ -98,6 +93,7 @@ export function mountRoom(root: HTMLElement, room: RoomPort, now: () => number =
       h('h2', { textContent: s.preset.name }),
       h('p', { className: 'role', textContent: viewer ? `You are Captain ${viewer}` : 'You are watching' }),
     ];
+    body.push(timeline(s.preset, s, viewer));
     if (room.integrity) body.push(h('p', { className: 'integrity', textContent: room.integrity }));
     if (room.notice) body.push(h('p', { className: 'notice', textContent: room.notice }));
     if (!viewer && !watching) body.push(seatChoice(s, room, () => { watching = true; render(); }));
