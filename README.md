@@ -58,7 +58,27 @@ Blind picks are hidden **in the UI only**. The draft state, including blind choi
 - `presets/{id}`: preset JSON string plus `ownerUid`, `createdAt`, `updatedAt`. Read by id only (no list queries). Only the creator (anonymous uid) can update; this is enforced in `firestore.rules` and in `savePreset`. Presets cannot be deleted.
 - `drafts/{id}`: seats are bound to the uid that claimed them. Rules check seat ownership and phase transitions; move legality is enforced by the client engine and re-verified on load.
 - Presets can also be shared without a database through the compressed link produced by the builder (`#<code>`).
-- The Firestore adapter and the rules are **not covered by automated tests** (no emulator in this repo). Verify them manually, and check current Firebase Spark quotas before launch.
+- The Firestore adapters and `firestore.rules` are **not covered by automated tests**. The Firestore emulator needs a Java runtime, which is not available in the development environment used so far (checked 2026-11-04: no `java` on PATH). To test the rules, install a JDK and run them with `@firebase/rules-unit-testing` against the emulator. Until then verify them manually.
+
+### Firestore free-tier (Spark) quotas
+
+Source: <https://firebase.google.com/docs/firestore/quotas>, read on 2026-11-04. Quotas are daily and reset around midnight Pacific time; one free database per project.
+
+| Free quota | Amount |
+| --- | --- |
+| Stored data | 1 GiB |
+| Document reads | 50,000 per day |
+| Document writes | 20,000 per day |
+| Document deletes | 20,000 per day |
+| Outbound data transfer | 10 GiB per month |
+
+Hard limit relevant here: a document is at most 1 MiB. Presets are capped at 100,000 characters by `firestore.rules`.
+
+Rough budget (our estimate, not from Firebase): every write to a draft is pushed to each open listener and counts as one read per listener, so a draft with 2 captains and a few spectators does about 3-5 reads per write. A short draft is roughly 20-40 writes, so the writes limit allows on the order of 500-1,000 drafts per day, and reads are the tighter limit when many spectators watch. Re-check the quotas page before launch, as they can change.
+
+## Running a draft
+
+Open `#room/<roomId>/<presetRef>/<A|B|spec>`. `presetRef` is `builtin-<id>` for a WARNO preset or a saved preset id. The first opener creates `drafts/{roomId}`; each seat is bound to the browser's anonymous uid. Set `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID` and `VITE_FIREBASE_APP_ID` (for example in `.env.local`) and enable Anonymous sign-in. Picking is two clicks: select, then confirm; if the timer runs out the selected (or a random) item is committed by any connected browser. The room has no reconnect logic of its own; it relies on the Firestore SDK.
 
 ## Not in the MVP
 
