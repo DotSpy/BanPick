@@ -2,15 +2,9 @@ import type { Preset, Step } from '../model';
 import { validatePreset } from '../schema';
 import * as E from './edit';
 import { draftOrder } from './preview';
+import { btn, h } from '../dom';
 import { decodePreset, encodePreset } from './share';
 
-type Child = Node | string;
-
-function h(tag: string, props: Record<string, unknown> = {}, ...kids: Child[]): HTMLElement {
-  const el = Object.assign(document.createElement(tag), props);
-  el.append(...kids);
-  return el;
-}
 
 const input = (value: string, onChange: (v: string) => void, type = 'text') =>
   h('input', { value, type, onchange: (e: Event) => onChange((e.target as HTMLInputElement).value) });
@@ -21,7 +15,6 @@ const select = (value: string, options: string[], onChange: (v: string) => void)
   return el;
 };
 
-const btn = (label: string, onClick: () => void) => h('button', { type: 'button', textContent: label, onclick: onClick });
 
 /** Mounts the builder into `root`. `onSave` receives only validated presets. */
 export function mountBuilder(root: HTMLElement, initial: Preset, onSave?: (p: Preset) => void) {

@@ -62,6 +62,47 @@ describe('builder view', () => {
     expect(root.querySelector('img')).toBeNull();
   });
 
+  it('renaming through the name input updates the preset', () => {
+    const { root, builder } = mount();
+    const nameInput = root.querySelector('input')!;
+
+    nameInput.value = 'Renamed';
+    nameInput.dispatchEvent(new Event('change'));
+
+    expect(builder.get().name).toBe('Renamed');
+  });
+
+  it('importing valid JSON replaces the preset', () => {
+    const { root, builder } = mount();
+    const imported = { ...newPreset(), name: 'Imported' };
+    const area = root.querySelector('textarea')!;
+
+    area.value = JSON.stringify(imported);
+    area.dispatchEvent(new Event('change'));
+
+    expect(builder.get().name).toBe('Imported');
+  });
+
+  it('ignores imported JSON that is not a valid preset', () => {
+    const { root, builder } = mount();
+    const area = root.querySelector('textarea')!;
+
+    area.value = '{"nope":1}';
+    area.dispatchEvent(new Event('change'));
+
+    expect(builder.get().name).toBe('New preset');
+  });
+
+  it('saves a valid preset', () => {
+    const root = document.createElement('div');
+    const saved: unknown[] = [];
+    mountBuilder(root, newPreset(), (p) => saved.push(p));
+
+    clickButton(root, 'Save');
+
+    expect(saved).toHaveLength(1);
+  });
+
   it('saves only a valid preset', () => {
     const root = document.createElement('div');
     const saved: unknown[] = [];
