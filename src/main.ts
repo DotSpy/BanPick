@@ -14,7 +14,7 @@ import { builtinPresets } from './builtins';
 import type { Preset } from './model';
 
 const root = document.getElementById('app')!;
-const show = (text: string) => root.replaceChildren(h('p', { role: 'alert', textContent: text }), h('a', { href: location.pathname, textContent: 'Back to the builder' }));
+const show = (text: string) => root.replaceChildren(h('div', { className: 'error-box' }, h('p', { role: 'alert', textContent: text }), h('a', { className: 'button', href: location.pathname, textContent: 'Back to the builder' })));
 const shortId = () => crypto.randomUUID().slice(0, 8);
 
 async function resolvePreset(ref: string): Promise<Preset | string> {
@@ -22,7 +22,7 @@ async function resolvePreset(ref: string): Promise<Preset | string> {
   if (builtin) return builtin.preset;
   if (!db) return 'Firebase is not configured';
   const r = await loadPreset(firestorePresetStore(db), ref);
-  return r.ok ? r.value : r.error;
+  return r.ok ? r.value : `Could not load preset "${ref}". Check the link, or ask the host for a new one. (${r.error})`;
 }
 
 async function openRoom(roomId: string, presetRef: string, seat: 'A' | 'B' | null) {

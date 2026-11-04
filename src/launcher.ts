@@ -18,8 +18,8 @@ export function mountLauncher(root: HTMLElement, d: LauncherDeps) {
   root.replaceChildren(
     h('h2', { textContent: 'Start from a built-in preset' }),
     h('label', {}, 'Preset ', pick),
-    btn('Create room', () => result.replaceChildren(linksPanel(roomLinks(d.base, d.newId(), `builtin-${chosen().id}`)))),
-    btn('Edit copy', () => d.onEditCopy(structuredClone(chosen().preset))),
+    btn('Create room', () => result.replaceChildren(h('p', { className: 'hint', role: 'status', textContent: 'Room created. Send Captain A and Captain B their own link; spectators use the Spectator link.' }), linksPanel(roomLinks(d.base, d.newId(), `builtin-${chosen().id}`)))),
+    btn('Edit copy', () => d.onEditCopy(structuredClone(chosen().preset)), { className: 'secondary' }),
     result,
   );
 }

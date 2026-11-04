@@ -193,6 +193,53 @@ describe('room view guidance', () => {
     expect(root.querySelector('.hint')).toBeNull();
   });
 
+  it('marks the turn as mine for the captain on the clock', async () => {
+    const { a } = await started();
+    const { root } = view(a);
+
+    expect(root.querySelector('.turn')!.classList.contains('mine')).toBe(true);
+  });
+
+  it('marks the turn as waiting for the other captain', async () => {
+    const { b } = await started();
+    const { root } = view(b);
+
+    expect(root.querySelector('.turn')!.classList.contains('waiting')).toBe(true);
+  });
+
+  it('marks an open seat in the lobby', async () => {
+    const { root } = view(await room('ua', 'A'));
+
+    expect(root.querySelector('.seat.open')).not.toBeNull();
+  });
+
+  it('marks a ready seat in the lobby', async () => {
+    const r = await room('ua', 'A');
+    await r.setReady(true);
+    const { root } = view(r);
+
+    expect(root.querySelectorAll('.seat.ready')).toHaveLength(1);
+  });
+
+  it('flags the selected item as pressed', async () => {
+    const { a } = await started();
+    const { root, dispose } = view(a);
+
+    (root.querySelector('.items button') as HTMLButtonElement).click();
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(root.querySelector('.items button.selected')!.getAttribute('aria-pressed')).toBe('true');
+    dispose();
+  });
+
+  it('classifies history entries by action and team', async () => {
+    const { a, b } = await started(makePreset([step('A', 'pick', 'maps'), step('B', 'ban', 'maps')]));
+    await a.act('map-1');
+    const { root } = view(b);
+
+    expect(root.querySelector('.history li')!.className).toBe('pick team-A');
+  });
+
   it('announces turn changes politely and keeps the countdown outside the live region', async () => {
     const { a, b } = await started();
     await a.act('map-1');

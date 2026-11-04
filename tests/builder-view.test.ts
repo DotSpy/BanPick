@@ -19,6 +19,14 @@ describe('builder view', () => {
     expect(root.querySelectorAll('.order li')).toHaveLength(1);
   });
 
+  it('labels the preset name, step timer and JSON fields visibly', () => {
+    const { root } = mount();
+
+    const labels = [...root.querySelectorAll('label')].map((l) => l.textContent);
+
+    expect(labels).toEqual(expect.arrayContaining([expect.stringContaining('Preset name'), expect.stringContaining('Timer (s)'), expect.stringContaining('Preset JSON')]));
+  });
+
   it('adding a step grows the preview', () => {
     const { root } = mount();
 

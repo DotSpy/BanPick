@@ -37,7 +37,7 @@ const secondsLeft = (s: DraftState, now: number) => (s.deadline ? Math.max(0, Ma
 function itemButton(s: DraftState, id: string, disabled: boolean, selected: boolean, onClick: () => void) {
   const item = itemOf(s, id);
   const image = item?.image ? h('img', { src: item.image, alt: '', width: 32 }) : '';
-  return h('button', { type: 'button', disabled, className: selected ? 'selected' : '', onclick: onClick }, image, item?.name ?? id);
+  return h('button', { type: 'button', disabled, className: selected ? 'selected' : '', ariaPressed: String(selected), onclick: onClick }, image, item?.name ?? id);
 }
 
 /** Captain-name form. It lives outside the re-rendered content so typing is not lost on live updates. */
@@ -91,7 +91,7 @@ export function mountRoom(root: HTMLElement, room: RoomPort, now: () => number =
 
     if (s.phase === 'lobby') {
       for (const t of ['A', 'B'] as Team[]) {
-        body.push(h('p', { className: 'seat', textContent: `Team ${t}: ${s.teams[t].owner ? s.teams[t].name : 'open'}${s.teams[t].ready ? ' (ready)' : ''}` }));
+        body.push(h('p', { className: `seat ${s.teams[t].ready ? 'ready' : s.teams[t].owner ? 'joined' : 'open'}`, textContent: `Team ${t}: ${s.teams[t].owner ? s.teams[t].name : 'open'}${s.teams[t].ready ? ' (ready)' : ''}` }));
       }
       body.push(h('p', { className: 'hint', textContent: 'The draft starts when both captains are ready.' }));
       if (viewer) body.push(btn(s.teams[viewer].ready ? 'Not ready' : 'Ready', () => void room.setReady(!s.teams[viewer].ready)));
@@ -99,18 +99,20 @@ export function mountRoom(root: HTMLElement, room: RoomPort, now: () => number =
       const status = s.pausing ? 'Paused' : s.confirm ? 'Waiting for both captains to confirm' : `${s.teams[turn.team].name} ${describeTurn(turn)}`;
       timerEl = h('span', { className: 'timer' });
       showTimer();
-      body.push(h('p', { className: 'turn' }, h('span', { role: 'status', textContent: status }), timerEl));
+      const mode = s.pausing ? 'paused' : s.confirm ? 'confirming' : myTurn ? 'mine' : 'waiting';
+      body.push(h('p', { className: `turn ${mode}` }, h('span', { role: 'status', textContent: status }), timerEl));
       if (viewer && !myTurn && !s.confirm && !s.pausing) body.push(h('p', { className: 'hint', textContent: `Waiting for ${s.teams[turn.team].name}…` }));
       if (s.confirm && viewer && !s.confirm[viewer]) body.push(btn('Confirm', () => void room.confirmNext()));
+      if (s.confirm && viewer && s.confirm[viewer]) body.push(h('p', { className: 'hint', textContent: 'You confirmed. Waiting for the other captain\u2026' }));
       body.push(h('div', { className: 'items' }, ...availableList(s, turn).map((id) => itemButton(s, id, !myTurn, s.selection?.team === viewer && s.selection?.itemId === id, () => void room.select(id)))));
       if (myTurn && s.selection) body.push(btn(`Confirm ${nameOf(s, s.selection.itemId)}`, () => void room.act(s.selection!.itemId), { className: 'commit' }));
     } else {
-      body.push(h('p', { className: 'turn', textContent: 'Draft finished' }));
+      body.push(h('p', { className: 'turn finished', textContent: 'Draft finished' }));
     }
 
     body.push(
       h('ol', { className: 'history' }, ...visibleHistory(s, turn, viewer).map((e) =>
-        h('li', { textContent: `${s.teams[e.team].name}: ${e.action} ${e.itemId ? nameOf(s, e.itemId) : '(hidden)'}${e.auto ? ' (auto)' : ''}` }),
+        h('li', { className: `${e.action} team-${e.team}`, textContent: `${s.teams[e.team].name}: ${e.action} ${e.itemId ? nameOf(s, e.itemId) : '(hidden)'}${e.auto ? ' (auto)' : ''}` }),
       )),
     );
     content.replaceChildren(...body);

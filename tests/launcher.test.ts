@@ -65,6 +65,22 @@ describe('launcher', () => {
     ]);
   });
 
+  it('confirms the room was created and who gets which link', () => {
+    const root = mount();
+
+    click(root, 'Create room');
+
+    expect(root.querySelector('p.hint[role=status]')!.textContent).toContain('Room created');
+  });
+
+  it('styles Edit copy as a secondary action', () => {
+    const root = mount();
+
+    const btn = [...root.querySelectorAll('button')].find((b) => b.textContent === 'Edit copy')!;
+
+    expect(btn.classList.contains('secondary')).toBe(true);
+  });
+
   it('hands a copy of the chosen preset to the builder', () => {
     const edited: unknown[] = [];
     const root = mount((p) => edited.push(p));
