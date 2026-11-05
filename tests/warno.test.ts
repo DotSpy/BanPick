@@ -211,24 +211,37 @@ describe('WARNO: timers and pauses', () => {
     expect([s.deadline, s.pausing]).toEqual([30_000, false]);
   });
 
-  it('a division step waits 10 seconds before its timer starts', () => {
+  it('the first division step waits for both captains to confirm, with no timer running', () => {
     const s = afterMaps();
 
-    expect([s.pausing, s.deadline]).toEqual([true, 10_000]);
+    expect([s.pausing, s.confirm, s.deadline]).toEqual([false, { A: false, B: false }, null]);
   });
 
-  it('picks are refused during the division pause', () => {
+  it('picks are refused while the captains have not confirmed', () => {
     const s = afterMaps();
 
-    expect(applyPick(s, 'A', options(s)[0], 0, false)).toMatch(/Paused/);
+    expect(applyPick(s, 'A', options(s)[0], 0, false)).toMatch(/confirm/i);
   });
 
-  it("the division pick timer is 45 seconds, counted from the end of the pause", () => {
+  it('the division timer starts when both captains confirmed', () => {
     const s = afterMaps();
-    play(s, 2);
-    resumeFromPause(s, 20_000);
+    confirmNext(s, 'A', 20_000);
+    confirmNext(s, 'B', 20_000);
 
-    expect(s.deadline).toBe(65_000);
+    expect(s.deadline).toBe(20_000 + 30_000);
+  });
+
+  it('later division steps run without any pause', () => {
+    const s = afterMaps();
+    play(s, 1);
+
+    expect([s.pausing, s.confirm]).toEqual([false, null]);
+  });
+
+  it.each(builtinPresets.map((p) => p.id))('%s has no timed pause and at most one ready gate', (id) => {
+    const pauses = preset(id).steps.map((t) => t.pause).filter((p) => p !== undefined);
+
+    expect(pauses.every((p) => p === 'ready') && pauses.length <= 1).toBe(true);
   });
 
   it('the preset can gate every step on both captains when pauseBetweenSteps is set', () => {

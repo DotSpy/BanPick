@@ -120,14 +120,14 @@ export function mountRoom(root: HTMLElement, room: RoomPort, now: () => number =
       timerEl = h('span', { className: 'timer' });
       showTimer();
       const mode = s.pausing ? 'paused' : s.confirm ? 'confirming' : myTurn ? 'mine' : 'waiting';
-      body.push(h('p', { className: `turn ${mode}` }, h('span', { role: 'status', textContent: status }), timerEl));
+      body.push(h('p', { className: `turn ${mode} ${turn.action}` }, h('span', { role: 'status', textContent: status }), timerEl));
       if (viewer && !myTurn && !s.confirm && !s.pausing) body.push(h('p', { className: 'hint', textContent: `Waiting for ${s.teams[turn.team].name}…` }));
       if (s.confirm && viewer && !s.confirm[viewer]) body.push(btn('Confirm', () => void room.confirmNext()));
       if (s.confirm && viewer && s.confirm[viewer]) body.push(h('p', { className: 'hint', textContent: 'You confirmed. Waiting for the other captain\u2026' }));
       const options = shownList(s, turn, visibleHistory(s, turn, viewer));
       body.push(h('div', { className: options.length <= FEW_OPTIONS ? 'items few' : 'items' }, ...options.map((id) => itemButton(s, turn, id, !myTurn, s.selection?.team === viewer && s.selection?.itemId === id, () => void room.select(id)))));
       if (myTurn && turn.random) body.push(btn('Random', () => void room.random(), { className: 'secondary' }));
-      if (myTurn && s.selection) body.push(btn(`Confirm ${nameOf(s, s.selection.itemId)}`, () => void room.act(s.selection!.itemId), { className: 'commit' }));
+      if (myTurn && s.selection) body.push(btn(`Confirm ${nameOf(s, s.selection.itemId)}`, () => void room.act(s.selection!.itemId), { className: `commit ${turn.action}` }));
     } else {
       body.push(h('p', { className: 'turn finished', textContent: 'Draft finished' }));
     }

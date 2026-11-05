@@ -27,6 +27,9 @@
   --commit: #2e8f4d;
   --commit-hover: #38a85c;
   --on-commit: #06130b;
+  --ban-commit: #d64545;
+  --ban-commit-hover: #e45f5f;
+  --on-ban-commit: #1a0505;
   --pause-line: #a78bfa;
   --pause-bg: #2a2150;
   --pause-text: #cdbdff;
@@ -82,6 +85,9 @@
   --commit: #146c2e;
   --commit-hover: #0f5223;
   --on-commit: #ffffff;
+  --ban-commit: #b3261e;
+  --ban-commit-hover: #8f1d17;
+  --on-ban-commit: #ffffff;
   --pause-line: #7c3aed;
   --pause-bg: #f1eafe;
   --pause-text: #5b21b6;
@@ -231,6 +237,8 @@ form.name[hidden] { display: none; }
 .turn { margin: var(--s-4) 0 var(--s-3); padding: var(--s-3) var(--s-4); border-radius: var(--radius); border-left: 6px solid var(--line); background: var(--surface-2); font-size: var(--fs-lg); font-weight: 700; display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-2); }
 .turn.mine { border-color: var(--success); background: var(--success-bg); color: var(--success); }
 .turn.paused, .turn.confirming { border-color: var(--warning-line); background: var(--warning-bg); color: var(--warning); }
+.turn.mine.ban, .turn.waiting.ban { border-color: var(--danger); background: var(--danger-bg); color: var(--danger); }
+.turn.waiting.pick { border-color: var(--success); background: var(--success-bg); color: var(--success); }
 .turn.finished { border-color: var(--primary); background: var(--info-bg); color: var(--primary); }
 .timer { margin-left: auto; padding: var(--s-1) var(--s-3); border-radius: 999px; background: var(--surface); color: var(--text); font-variant-numeric: tabular-nums; font-size: var(--fs-lg); }
 .timer:empty { display: none; }
@@ -247,13 +255,18 @@ form.name[hidden] { display: none; }
 /* Icon size comes from the pool's iconSize (icon-small|medium|large); contexts scale it down. */
 .icon-img, .icon-fallback { --icon: 32px; width: calc(var(--icon) * var(--ctx, 1)); height: calc(var(--icon) * var(--ctx, 1)); border-radius: 4px; flex: none; }
 .icon-small { --icon: 20px; }
-.icon-large { --icon: 64px; }
+.icon-large { --icon: 96px; }
+.history .icon-large, .row .icon-large { --ctx: 0.5; }
+.tl .icon-large { --ctx: 0.583; }
+.items.few button .icon-large { --icon: 96px; }
 .icon-img { object-fit: cover; vertical-align: middle; }
 .history, .row { --ctx: 0.75; }
 .history .icon-img, .row .icon-img, .history .icon-fallback, .row .icon-fallback { margin: 0 var(--s-1); }
 .icon-fallback { display: inline-flex; align-items: center; justify-content: center; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); font-weight: 700; font-size: calc(var(--icon) * 0.4 * var(--ctx, 1)); }
 .icon-fallback::before { content: attr(data-initial); }
 button.commit { width: 100%; background: var(--commit); border-color: var(--commit); color: var(--on-commit); font-size: var(--fs-lg); min-height: 52px; position: sticky; bottom: var(--s-2); z-index: 2; box-shadow: var(--shadow); }
+button.commit.ban { background: var(--ban-commit); border-color: var(--ban-commit); color: var(--on-ban-commit); }
+button.commit.ban:hover:not(:disabled) { background: var(--ban-commit-hover); border-color: var(--ban-commit-hover); }
 button.commit:hover:not(:disabled) { background: var(--commit-hover); border-color: var(--commit-hover); }
 
 .history { margin-top: var(--s-4); }

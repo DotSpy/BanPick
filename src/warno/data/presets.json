@@ -5,38 +5,38 @@
       "id": "1v1", "name": "1v1 Duel", "teamSize": 1, "pool": "1v1",
       "steps": [
         "A ban map 30", "B ban map 30", "A ban map 30", "B ban map 30", "A ban map 30", "B ban map 30", "A pick map 30", "A pick side 30",
-        "A ban division 30 10", "B ban division 30 10",
-        "A pick division 45 10", "B pick division 45 10"
+        "A ban division 30 ready", "B ban division 30",
+        "A pick division 45", "B pick division 45"
       ]
     },
     {
       "id": "2v2", "name": "2v2", "teamSize": 2, "pool": "2v2",
       "steps": [
         "A ban map 30", "B ban map 30", "A ban map 30", "B ban map 30", "A ban map 30", "B ban map 30", "A ban map 30", "B ban map 30", "A pick map 30", "A pick side 30",
-        "A ban division 30 10", "B ban division 30 10", "A ban division 30 10", "B ban division 30 10",
-        "A pick division 45 10", "B pick division 45 10", "A pick division 45 10", "B pick division 45 10"
+        "A ban division 30 ready", "B ban division 30", "A ban division 30", "B ban division 30",
+        "A pick division 45", "B pick division 45", "A pick division 45", "B pick division 45"
       ]
     },
     {
       "id": "3v3", "name": "3v3", "teamSize": 3, "pool": "3v3",
       "steps": [
         "A ban map 30", "B ban map 30", "A ban map 30", "B ban map 30", "A pick map 30", "A pick side 30",
-        "A ban division 30 10", "B ban division 30 10", "A ban division 30 10", "B ban division 30 10", "A ban division 30 10", "B ban division 30 10",
-        "A pick division 45 10", "B pick division 45 10", "A pick division 45 10", "B pick division 45 10", "A pick division 45 10", "B pick division 45 10"
+        "A ban division 30 ready", "B ban division 30", "A ban division 30", "B ban division 30", "A ban division 30", "B ban division 30",
+        "A pick division 45", "B pick division 45", "A pick division 45", "B pick division 45", "A pick division 45", "B pick division 45"
       ]
     },
     {
       "id": "open-exclusive", "name": "2v2 Open pool - exclusive (one by one)", "teamSize": 2, "pool": "2v2", "divisionPick": "exclusive",
       "steps": [
         "A ban map 30", "B ban map 30", "A ban map 30", "B ban map 30", "A pick map 30",
-        "A pick division 45 10", "B pick division 45 10", "B pick division 45 10", "A pick division 45 10"
+        "A pick division 45 ready", "B pick division 45", "B pick division 45", "A pick division 45"
       ]
     },
     {
       "id": "open-shared", "name": "2v2 Open pool - shared (blind-style)", "teamSize": 2, "pool": "2v2", "divisionPick": "shared",
       "steps": [
         "A ban map 30", "B ban map 30", "A ban map 30", "B ban map 30", "A pick map 30",
-        "A pick division 45 10", "A pick division 45 10", "B pick division 45 10", "B pick division 45 10"
+        "A pick division 45 ready", "A pick division 45", "B pick division 45", "B pick division 45"
       ]
     },
     {
@@ -44,13 +44,13 @@
       "rules": [
         { "kind": "mapBan", "pattern": "1-1-1-1", "first": "A", "timer": 30 },
         { "kind": "mapPick", "pattern": "1-1-1", "first": "A", "timer": 30 },
-        { "kind": "divBan", "pattern": "1-1", "first": "B", "timer": 30, "pause": 10 },
-        { "kind": "divPick", "pattern": "1-2-2-1", "first": "A", "timer": 45, "pause": 10 }
+        { "kind": "divBan", "pattern": "1-1", "first": "B", "timer": 30, "pause": "ready" },
+        { "kind": "divPick", "pattern": "1-2-2-1", "first": "A", "timer": 45 }
       ],
       "steps": [
         "A ban map 30", "B ban map 30", "A ban map 30", "B ban map 30", "A pick map 30", "B pick map 30", "A pick map 30",
-        "B ban division 30 10", "A ban division 30 10",
-        "A pick division 45 10", "B pick division 45 10", "B pick division 45 10", "A pick division 45 10", "A pick division 45 10", "B pick division 45 10"
+        "B ban division 30 ready", "A ban division 30",
+        "A pick division 45", "B pick division 45", "B pick division 45", "A pick division 45", "A pick division 45", "B pick division 45"
       ]
     },
     {
@@ -58,11 +58,11 @@
       "rules": [
         { "kind": "mapBan", "pattern": "1-1-1-1", "first": "B", "timer": 30 },
         { "kind": "mapPick", "pattern": "1-1", "first": "A", "timer": 30 },
-        { "kind": "divPick", "pattern": "4-4", "first": "A", "timer": 45, "pause": 10 }
+        { "kind": "divPick", "pattern": "4-4", "first": "A", "timer": 45, "pause": "ready" }
       ],
       "steps": [
         "B ban map 30", "A ban map 30", "B ban map 30", "A ban map 30", "A pick map 30", "B pick map 30",
-        "A pick division 45 10", "A pick division 45 10", "A pick division 45 10", "A pick division 45 10", "B pick division 45 10", "B pick division 45 10", "B pick division 45 10", "B pick division 45 10"
+        "A pick division 45 ready", "A pick division 45", "A pick division 45", "A pick division 45", "B pick division 45", "B pick division 45", "B pick division 45", "B pick division 45"
       ]
     }
   ]
