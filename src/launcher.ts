@@ -15,11 +15,13 @@ export function mountLauncher(root: HTMLElement, d: LauncherDeps) {
   const pick = h('select', { ariaLabel: 'Built-in preset' }, ...d.presets.map((p) => h('option', { value: p.id, textContent: p.preset.name }))) as HTMLSelectElement;
   const result = h('div');
   const chosen = () => d.presets.find((p) => p.id === pick.value)!;
+  const load = () => d.onEditCopy(structuredClone(chosen().preset));
+  pick.addEventListener('change', load);
   root.replaceChildren(
     h('h2', { textContent: 'Start from a built-in preset' }),
     h('label', {}, 'Preset ', pick),
     btn('Create room', () => result.replaceChildren(h('p', { className: 'hint', role: 'status', textContent: 'Room created. Send everyone this one link; each person chooses Team A, Team B or Watch after opening it.' }), linksPanel([roomLink(d.base, d.newId(), `builtin-${chosen().id}`)]))),
-    btn('Edit copy', () => d.onEditCopy(structuredClone(chosen().preset)), { className: 'secondary' }),
+    btn('Edit copy', load, { className: 'secondary' }),
     result,
   );
 }

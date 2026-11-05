@@ -1,4 +1,4 @@
-﻿// @vitest-environment happy-dom
+// @vitest-environment happy-dom
 import { describe, expect, it } from 'vitest';
 import { linksPanel } from '../src/links';
 import { mountLauncher } from '../src/launcher';
@@ -85,5 +85,16 @@ describe('launcher', () => {
 
     expect(edited[0]).toEqual(presets[0].preset);
     expect(edited[0]).not.toBe(presets[0].preset);
+  });
+
+  it('loads the selected preset into the builder when the selection changes', () => {
+    const edited: unknown[] = [];
+    const root = mount((p) => edited.push(p));
+    const select = root.querySelector('select') as HTMLSelectElement;
+    select.value = 'two';
+
+    select.dispatchEvent(new Event('change'));
+
+    expect(edited).toEqual([presets[1].preset]);
   });
 });
