@@ -1,5 +1,4 @@
 // @vitest-environment happy-dom
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { itemIcon } from '../src/icon';
 import { validatePreset } from '../src/schema';
@@ -35,12 +34,8 @@ describe('icon enlarge hint', () => {
     expect(el().title).toBe('Hold to enlarge');
   });
 
-  it('adds a decorative magnifier badge', () => {
-    expect(el().querySelector('.icon-zoom')?.getAttribute('aria-hidden')).toBe('true');
-  });
-
-  it('keeps the badge from taking pointer events', () => {
-    expect(readFileSync('src/styles.css', 'utf8')).toMatch(/\.icon-zoom \{[^}]*pointer-events: none/);
+  it('adds no visible badge', () => {
+    expect(el().querySelector('.icon-zoom')).toBeNull();
   });
 });
 
