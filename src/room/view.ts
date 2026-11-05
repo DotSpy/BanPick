@@ -3,7 +3,7 @@ import { currentTurn, type DraftState } from '../draft';
 import type { Team, Turn } from '../model';
 import { itemIcon } from '../icon';
 import { timeline } from '../timeline';
-import { availableList, findItem, iconSizeOf, visibleHistory } from '../rules';
+import { availableList, choiceOf, findItem, visibleHistory } from '../rules';
 
 /** What the view needs from a room; `Room` satisfies it. */
 export interface RoomPort {
@@ -32,9 +32,13 @@ const describeTurn = (t: Turn) => {
 
 const secondsLeft = (s: DraftState, now: number) => (s.deadline ? Math.max(0, Math.ceil((s.deadline - now) / 1000)) : null);
 
-function itemButton(s: DraftState, id: string, disabled: boolean, selected: boolean, onClick: () => void) {
-  const item = itemOf(s, id);
-  const size = iconSizeOf(s.preset, id);
+const icon = (s: DraftState, action: Turn['action'], id: string) => {
+  const { item, size } = choiceOf(s.preset, action, id);
+  return itemIcon(item, '', size);
+};
+
+function itemButton(s: DraftState, turn: Turn, id: string, disabled: boolean, selected: boolean, onClick: () => void) {
+  const { item, size } = choiceOf(s.preset, turn.action, id);
   return h('button', { type: 'button', disabled, className: `${selected ? 'selected ' : ''}tile-${size}`.trim(), ariaPressed: String(selected), onclick: onClick }, itemIcon(item, '', size), item?.name ?? id);
 }
 
@@ -115,7 +119,7 @@ export function mountRoom(root: HTMLElement, room: RoomPort, now: () => number =
       if (viewer && !myTurn && !s.confirm && !s.pausing) body.push(h('p', { className: 'hint', textContent: `Waiting for ${s.teams[turn.team].name}…` }));
       if (s.confirm && viewer && !s.confirm[viewer]) body.push(btn('Confirm', () => void room.confirmNext()));
       if (s.confirm && viewer && s.confirm[viewer]) body.push(h('p', { className: 'hint', textContent: 'You confirmed. Waiting for the other captain\u2026' }));
-      body.push(h('div', { className: 'items' }, ...availableList(s, turn).map((id) => itemButton(s, id, !myTurn, s.selection?.team === viewer && s.selection?.itemId === id, () => void room.select(id)))));
+      body.push(h('div', { className: 'items' }, ...availableList(s, turn).map((id) => itemButton(s, turn, id, !myTurn, s.selection?.team === viewer && s.selection?.itemId === id, () => void room.select(id)))));
       if (myTurn && s.selection) body.push(btn(`Confirm ${nameOf(s, s.selection.itemId)}`, () => void room.act(s.selection!.itemId), { className: 'commit' }));
     } else {
       body.push(h('p', { className: 'turn finished', textContent: 'Draft finished' }));
@@ -125,7 +129,7 @@ export function mountRoom(root: HTMLElement, room: RoomPort, now: () => number =
       h('ol', { className: 'history' }, ...visibleHistory(s, turn, viewer).map((e) =>
         h('li', { className: `${e.action} team-${e.team}` },
           `${s.teams[e.team].name}: ${e.action} `,
-          e.itemId ? itemIcon(itemOf(s, e.itemId), '', iconSizeOf(s.preset, e.itemId)) : '',
+          e.itemId ? icon(s, e.action, e.itemId) : '',
           `${e.itemId ? nameOf(s, e.itemId) : '(hidden)'}${e.auto ? ' (auto)' : ''}`),
       )),
     );

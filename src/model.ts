@@ -22,6 +22,8 @@ export interface Tagging {
   assignment: 'chosen' | 'fixed' | 'none';
   tag?: string;
   values?: string[];
+  /** Optional https icon per tag value, shown wherever a value is chosen. */
+  images?: Record<string, string>;
   sameTag?: 'allow' | 'forbid';
   /** Fixed assignment: tag value held by each seat. */
   seats?: Record<Team, string>;

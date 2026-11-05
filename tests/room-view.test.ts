@@ -4,7 +4,7 @@ import { Room } from '../src/room/room';
 import { mountRoom } from '../src/room/view';
 import { parseRoute, roomHash, roomLink } from '../src/route';
 import { memoryDraftStore } from './memory-store';
-import { makePreset, step } from './fixtures';
+import { makePreset, sideTagging, step } from './fixtures';
 
 describe('route parsing', () => {
   it('parses a room link without a seat', () => {
@@ -318,6 +318,23 @@ describe('room view guidance', () => {
     const { root } = view(a);
 
     expect(root.querySelector('.history img')!.classList.contains('icon-large')).toBe(true);
+  });
+
+  it('shows the side images on the choose buttons', async () => {
+    const preset = makePreset([step('A', 'choose', 'side'), step('B', 'ban', 'maps')], { tagging: { ...sideTagging(), images: { nato: 'https://x.test/n.png', pact: 'https://x.test/p.png' } } });
+    const { a } = await started(preset);
+    const { root } = view(a);
+
+    expect([...root.querySelectorAll('.items img')].map((i) => i.getAttribute('src'))).toEqual(['https://x.test/n.png', 'https://x.test/p.png']);
+  });
+
+  it('lets a long label stay in the button text', async () => {
+    const preset = makePreset([step('A', 'ban', 'maps')]);
+    preset.pools.maps.items[0].name = 'Territorialkommando S\u00fcd';
+    const { a } = await started(preset);
+    const { root } = view(a);
+
+    expect(root.querySelector('.items button')!.textContent).toBe('Territorialkommando S\u00fcd');
   });
 });
 

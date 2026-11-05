@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { applyPick } from '../src/draft';
 import { timeline } from '../src/timeline';
-import { makePreset, started, step } from './fixtures';
+import { makePreset, sideTagging, started, step } from './fixtures';
 
 const chips = (el: HTMLElement) => [...el.querySelectorAll('li')];
 const classes = (el: HTMLElement) => chips(el).map((c) => c.className);
@@ -140,5 +140,15 @@ describe('timeline icon size', () => {
     applyPick(s, 'A', 'map-1', 0, false);
 
     expect(timeline(s.preset, s).querySelector('img')!.classList.contains('icon-large')).toBe(true);
+  });
+});
+
+describe('timeline tag choices', () => {
+  it('shows the icon of a chosen tag value', () => {
+    const p = makePreset([step('A', 'choose', 'side')], { tagging: { ...sideTagging(), images: { nato: 'https://x.test/n.png' } } });
+    const s = started(p);
+    applyPick(s, 'A', 'nato', 0, false);
+
+    expect(timeline(s.preset, s).querySelector('img')!.getAttribute('src')).toBe('https://x.test/n.png');
   });
 });

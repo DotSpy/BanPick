@@ -1,4 +1,4 @@
-import type { Entry, IconSize, Preset, Team, Turn } from './model';
+import type { Entry, IconSize, Item, Preset, Team, Turn } from './model';
 import { turnsOf } from './turns';
 
 const locate = (preset: Preset, id: string) => {
@@ -10,6 +10,10 @@ const locate = (preset: Preset, id: string) => {
 };
 
 export const findItem = (preset: Preset, id: string) => locate(preset, id)?.item;
+
+/** What to show for a chosen id: a tag value on a "choose" turn, otherwise a pool item. */
+export const choiceOf = (preset: Preset, action: Turn['action'], id: string): { item: Pick<Item, 'name' | 'image'> | undefined; size: IconSize } =>
+  action === 'choose' ? { item: { name: id, image: preset.tagging.images?.[id] }, size: 'medium' } : { item: findItem(preset, id), size: iconSizeOf(preset, id) };
 
 export const iconSizeOf = (preset: Preset, id: string): IconSize => locate(preset, id)?.pool.iconSize ?? 'medium';
 

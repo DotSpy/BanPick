@@ -299,3 +299,14 @@ describe('built-in map icon size', () => {
     expect([p.pools.maps.iconSize, p.pools.divisions.iconSize]).toEqual(['large', undefined]);
   });
 });
+
+describe('built-in side images', () => {
+  it('gives both sides an https icon from the icons repo', () => {
+    const p = builtinPresets.find((b) => b.preset.tagging.assignment === 'chosen')!.preset;
+
+    expect(p.tagging.images).toEqual({
+      nato: 'https://raw.githubusercontent.com/DotSpy/warno-icons/master/sides/nato.png',
+      pact: 'https://raw.githubusercontent.com/DotSpy/warno-icons/master/sides/pact.png',
+    });
+  });
+});

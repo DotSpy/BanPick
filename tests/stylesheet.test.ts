@@ -27,3 +27,20 @@ describe('stylesheet', () => {
     expect([!!css, css ? html.includes(css.fileName) : false]).toEqual([true, true]);
   }, 60_000);
 });
+
+describe('item tile text', () => {
+  const css = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
+  const tileRule = css.split('\n').find((l) => l.startsWith('.items button {')) ?? '';
+
+  it('wraps long labels inside the tile', () => {
+    expect(tileRule).toContain('overflow-wrap: anywhere');
+  });
+
+  it('lets the tile shrink to its grid cell', () => {
+    expect([tileRule.includes('min-width: 0'), tileRule.includes('max-width: 100%')]).toEqual([true, true]);
+  });
+
+  it('lets narrow grid columns shrink below their content', () => {
+    expect(css).toContain('repeat(2, minmax(0, 1fr))');
+  });
+});

@@ -84,3 +84,22 @@ describe('pool iconSize schema', () => {
     expect(withSize('huge')).not.toBe(true);
   });
 });
+
+describe('tag value images schema', () => {
+  const withImages = (images: Record<string, string>) => {
+    const p = makePreset([step('A', 'ban', 'maps')], { tagging: { assignment: 'chosen', tag: 'side', values: ['nato', 'pact'], images } });
+    return validatePreset(p).ok;
+  };
+
+  it('accepts https links for known values', () => {
+    expect(withImages({ nato: 'https://x.test/n.png' })).toBe(true);
+  });
+
+  it('rejects an image for a value that is not in tagging.values', () => {
+    expect(withImages({ navy: 'https://x.test/n.png' })).not.toBe(true);
+  });
+
+  it('rejects a non-https link', () => {
+    expect(withImages({ nato: 'http://x.test/n.png' })).not.toBe(true);
+  });
+});

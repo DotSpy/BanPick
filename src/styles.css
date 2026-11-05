@@ -223,7 +223,7 @@ form.name[hidden] { display: none; }
 .timer:empty { display: none; }
 
 .items { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: var(--s-2); margin: var(--s-3) 0; }
-.items button { justify-content: flex-start; background: var(--surface); color: var(--text); border-color: var(--line); font-weight: 500; }
+.items button { min-width: 0; max-width: 100%; overflow-wrap: anywhere; text-align: left; justify-content: flex-start; background: var(--surface); color: var(--text); border-color: var(--line); font-weight: 500; }
 .items button:hover:not(:disabled) { background: var(--info-bg); border-color: var(--primary); color: var(--text); }
 .items button.selected, .items button.selected:hover:not(:disabled) { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
 .items button.tile-large { flex-direction: column; justify-content: center; text-align: center; gap: var(--s-2); }
@@ -254,7 +254,7 @@ button.commit:hover:not(:disabled) { background: var(--commit-hover); border-col
   :root { --fs-xl: 1.4rem; --fs-lg: 1.125rem; }
   #app { padding: var(--s-2); }
   #app > div, #app > form.name { padding: var(--s-3); }
-  .items { grid-template-columns: 1fr 1fr; }
+  .items { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .row > select, .row > input[type='text'] { flex: 1 1 8rem; min-width: 0; }
   .row > button.icon:last-of-type { margin-left: auto; }
   button.commit, .items + button, .turn ~ button:not(.icon) { width: 100%; }

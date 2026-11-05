@@ -29,6 +29,7 @@ const tagging = z.object({
   assignment: z.enum(['chosen', 'fixed', 'none']),
   tag: tagValue.optional(),
   values: z.array(tagValue).min(2).max(20).optional(),
+  images: z.record(tagValue, httpsUrl).optional(),
   sameTag: z.enum(['allow', 'forbid']).optional(),
   seats: z.object({ A: tagValue, B: tagValue }).optional(),
 });
@@ -76,6 +77,10 @@ export const presetSchema = z
         }
         if (t.sameTag === 'forbid' && t.seats.A === t.seats.B) bad(['tagging', 'seats'], 'both seats hold the same tag but sameTag is "forbid"');
       }
+    }
+
+    for (const value of Object.keys(t.images ?? {})) {
+      if (!t.values?.includes(value)) bad(['tagging', 'images', value], `"${value}" not in tagging.values`);
     }
 
     for (const [poolName, pl] of Object.entries(p.pools)) {
