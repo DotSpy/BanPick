@@ -11,20 +11,20 @@ describe('page width', () => {
     document.documentElement.removeAttribute('data-width');
   });
 
-  it('defaults to compact', () => {
-    expect(savedWidth(store())).toBe('compact');
+  it('defaults to wide', () => {
+    expect(savedWidth(store())).toBe('wide');
   });
 
-  it('restores a saved wide choice', () => {
-    expect(savedWidth(store('wide'))).toBe('wide');
+  it('restores a saved compact choice', () => {
+    expect(savedWidth(store('compact'))).toBe('compact');
   });
 
-  it('falls back to compact for an unknown value', () => {
-    expect(savedWidth(store('huge'))).toBe('compact');
+  it('falls back to wide for an unknown value', () => {
+    expect(savedWidth(store('huge'))).toBe('wide');
   });
 
-  it('falls back to compact when storage throws', () => {
-    expect(savedWidth({ getItem: () => { throw new Error('denied'); } })).toBe('compact');
+  it('falls back to wide when storage throws', () => {
+    expect(savedWidth({ getItem: () => { throw new Error('denied'); } })).toBe('wide');
   });
 
   it('applies and saves the choice', () => {
@@ -36,16 +36,16 @@ describe('page width', () => {
   it('offers a labelled select with the three widths', () => {
     const select = widthControl().querySelector('select')!;
 
-    expect([select.getAttribute('aria-label'), [...select.options].map((o) => o.value), select.value]).toEqual(['Page width', ['compact', 'wide', 'full'], 'compact']);
+    expect([select.getAttribute('aria-label'), [...select.options].map((o) => o.value), select.value]).toEqual(['Page width', ['compact', 'wide', 'full'], 'wide']);
   });
 
   it('changing the select updates the page and storage', () => {
     const select = widthControl().querySelector('select')!;
 
-    select.value = 'wide';
+    select.value = 'compact';
     select.dispatchEvent(new Event('change'));
 
-    expect([document.documentElement.dataset.width, localStorage.getItem(WIDTH_KEY)]).toEqual(['wide', 'wide']);
+    expect([document.documentElement.dataset.width, localStorage.getItem(WIDTH_KEY)]).toEqual(['compact', 'compact']);
   });
 
   it('starts the select on the saved width', () => {
@@ -59,13 +59,13 @@ describe('width styles', () => {
   const css = readFileSync('src/styles.css', 'utf8');
   const html = readFileSync('index.html', 'utf8');
 
-  it('sizes the app from a width token with compact as the default', () => {
-    expect(css).toContain('--app-max: 52rem;');
+  it('sizes the app from a width token with wide as the default', () => {
+    expect(css).toContain('--app-max: 90rem;');
     expect(css).toContain('max-width: var(--app-max)');
   });
 
-  it('widens for wide and full', () => {
-    expect(css).toContain("[data-width='wide'] { --app-max: 90rem; }");
+  it('narrows for compact and widens for full', () => {
+    expect(css).toContain("[data-width='compact'] { --app-max: 52rem; }");
     expect(css).toContain("[data-width='full'] { --app-max: none; }");
   });
 

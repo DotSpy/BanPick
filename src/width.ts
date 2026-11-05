@@ -2,13 +2,13 @@
 export const WIDTH_KEY = 'banpick-width';
 export const WIDTHS: Width[] = ['compact', 'wide', 'full'];
 
-/** Compact (the original narrow layout) unless the user saved another known width. index.html applies the same rule before first paint. */
+/** Wide unless the user saved another known width (compact is the original narrow layout). index.html applies the same rule before first paint. */
 export function savedWidth(storage: Pick<Storage, 'getItem'> = localStorage): Width {
   try {
     const v = storage.getItem(WIDTH_KEY) as Width | null;
-    return v && WIDTHS.includes(v) ? v : 'compact';
+    return v && WIDTHS.includes(v) ? v : 'wide';
   } catch {
-    return 'compact';
+    return 'wide';
   }
 }
 

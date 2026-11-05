@@ -51,10 +51,10 @@
   --radius: 10px;
   --radius-sm: 6px;
   --tap: 44px;
-  --app-max: 52rem;
+  --app-max: 90rem;
 }
 
-:root[data-width='wide'] { --app-max: 90rem; }
+:root[data-width='compact'] { --app-max: 52rem; }
 :root[data-width='full'] { --app-max: none; }
 
 :root[data-theme='light'] {
