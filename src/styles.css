@@ -253,7 +253,7 @@ form.name[hidden] { display: none; }
 .history .icon-img, .row .icon-img, .history .icon-fallback, .row .icon-fallback { margin: 0 var(--s-1); }
 .icon-fallback { display: inline-flex; align-items: center; justify-content: center; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); font-weight: 700; font-size: calc(var(--icon) * 0.4 * var(--ctx, 1)); }
 .icon-fallback::before { content: attr(data-initial); }
-button.commit { width: 100%; background: var(--commit); border-color: var(--commit); color: var(--on-commit); font-size: var(--fs-lg); min-height: 52px; }
+button.commit { width: 100%; background: var(--commit); border-color: var(--commit); color: var(--on-commit); font-size: var(--fs-lg); min-height: 52px; position: sticky; bottom: var(--s-2); z-index: 2; box-shadow: var(--shadow); }
 button.commit:hover:not(:disabled) { background: var(--commit-hover); border-color: var(--commit-hover); }
 
 .history { margin-top: var(--s-4); }

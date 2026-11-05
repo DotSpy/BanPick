@@ -49,3 +49,9 @@ describe('few-option tile styles', () => {
     expect(css).toMatch(/\.items\.few button \{[^}]*min-height: 120px/);
   });
 });
+
+describe('confirm button', () => {
+  it('sticks to the bottom of the viewport so a long pool needs no scrolling', () => {
+    expect(readFileSync('src/styles.css', 'utf8')).toMatch(/button\.commit \{[^}]*position: sticky; bottom: var\(--s-2\)/);
+  });
+});
