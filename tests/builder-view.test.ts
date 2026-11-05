@@ -312,3 +312,23 @@ describe('tag value images', () => {
     expect(root.querySelector('.errors')!.textContent).toContain('tagging.images');
   });
 });
+
+describe('step row labels', () => {
+  it('labels every field of a pick step so the controls line up', () => {
+    const p = newPreset();
+    p.steps = [{ team: 'A', action: 'pick', pool: 'items', count: 1 }];
+    const root = document.createElement('div');
+
+    mountBuilder(root, p);
+
+    expect([...root.querySelectorAll('ol li.row.labelled > label.mini')].map((l) => l.firstChild!.textContent)).toEqual(['Team', 'Action', 'Pool', 'Count', 'Timer (s)', 'Blind']);
+  });
+
+  it('leaves no unlabelled select in a step row', () => {
+    const root = document.createElement('div');
+
+    mountBuilder(root, newPreset());
+
+    expect(root.querySelectorAll('ol li.row.labelled > select')).toHaveLength(0);
+  });
+});

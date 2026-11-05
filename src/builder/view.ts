@@ -48,13 +48,13 @@ export function mountBuilder(root: HTMLElement, initial: Preset, onSave?: (p: Pr
     const poolNames = Object.keys(preset.pools);
     const patch = (p: Partial<Step>) => update(E.updateStep(preset, i, p));
     return h(
-      'li', { className: 'row' },
-      select(`Step ${i + 1} team`, s.team, ['A', 'B'], (v) => patch({ team: v as Step['team'] })),
-      select(`Step ${i + 1} action`, s.action, ['ban', 'pick', 'choose'], (v) => patch({ action: v as Step['action'] })),
-      s.action === 'choose' ? '' : select(`Step ${i + 1} pool`, s.pool ?? poolNames[0], poolNames, (v) => patch({ pool: v })),
+      'li', { className: 'row labelled' },
+      h('label', { className: 'mini' }, 'Team', select(`Step ${i + 1} team`, s.team, ['A', 'B'], (v) => patch({ team: v as Step['team'] }))),
+      h('label', { className: 'mini' }, 'Action', select(`Step ${i + 1} action`, s.action, ['ban', 'pick', 'choose'], (v) => patch({ action: v as Step['action'] }))),
+      s.action === 'choose' ? '' : h('label', { className: 'mini' }, 'Pool', select(`Step ${i + 1} pool`, s.pool ?? poolNames[0], poolNames, (v) => patch({ pool: v }))),
       h('label', { className: 'mini' }, 'Count', numberInput(`Step ${i + 1} count`, s.count ?? 1, 1, (v) => patch({ count: v }))),
       h('label', { className: 'mini' }, 'Timer (s)', numberInput(`Step ${i + 1} timer in seconds (0 = no timer)`, s.timer ?? 0, 0, (v) => patch({ timer: v }))),
-      s.action === 'pick' ? h('label', {}, 'blind', h('input', { type: 'checkbox', checked: !!s.blind, onchange: (e: Event) => { const c = (e.target as HTMLInputElement).checked; later(() => patch({ blind: c })); } })) : '',
+      s.action === 'pick' ? h('label', { className: 'mini' }, 'Blind', h('input', { type: 'checkbox', checked: !!s.blind, onchange: (e: Event) => { const c = (e.target as HTMLInputElement).checked; later(() => patch({ blind: c })); } })) : '',
       btn('↑', () => update(E.moveStep(preset, i, i - 1)), { className: 'icon', ariaLabel: `Move step ${i + 1} up` }),
       btn('↓', () => update(E.moveStep(preset, i, i + 1)), { className: 'icon', ariaLabel: `Move step ${i + 1} down` }),
       btn('✕', () => update(E.removeStep(preset, i)), { className: 'icon', ariaLabel: `Remove step ${i + 1}` }),

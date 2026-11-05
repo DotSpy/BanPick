@@ -130,7 +130,8 @@ a { color: var(--primary); }
 .hint { color: var(--muted); font-size: var(--fs-sm); }
 
 /* Form controls */
-label { display: inline-flex; align-items: center; gap: var(--s-2); min-height: var(--tap); }
+label { display: inline-flex; align-items: center; gap: var(--s-2); min-height: var(--tap); max-width: 100%; }
+label > select { min-width: 0; flex: 1 1 8rem; }
 label.field { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s-1); min-height: 0; margin-top: var(--s-3); font-weight: 600; font-size: var(--fs-sm); }
 label.mini { flex-direction: column; align-items: flex-start; gap: 0; min-height: 0; font-size: 0.75rem; color: var(--muted); }
 
@@ -181,6 +182,8 @@ section { margin-top: var(--s-4); padding: var(--s-3) var(--s-4); border: 1px so
 section h3 { margin-top: 0; }
 ol, ul { margin: var(--s-2) 0; padding-left: 0; list-style: none; }
 .row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); padding: var(--s-2) 0; border-bottom: 1px solid var(--line); }
+.row.labelled { align-items: flex-end; }
+#app .row > button { margin: 0; }
 .row:last-child { border-bottom: 0; }
 .history { counter-reset: n; }
 .history li { counter-increment: n; padding: var(--s-1) 0; }
@@ -256,6 +259,8 @@ button.commit:hover:not(:disabled) { background: var(--commit-hover); border-col
   #app > div, #app > form.name { padding: var(--s-3); }
   .items { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .row > select, .row > input[type='text'] { flex: 1 1 8rem; min-width: 0; }
+  .row.labelled > label.mini { flex: 1 1 6rem; min-width: 0; }
+  .row.labelled > label.mini > select, .row.labelled > label.mini > input { width: 100%; }
   .row > button.icon:last-of-type { margin-left: auto; }
   button.commit, .items + button, .turn ~ button:not(.icon) { width: 100%; }
   .timer { margin-left: 0; }

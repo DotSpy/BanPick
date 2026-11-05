@@ -44,3 +44,15 @@ describe('item tile text', () => {
     expect(css).toContain('repeat(2, minmax(0, 1fr))');
   });
 });
+
+describe('builder step row', () => {
+  const css = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
+
+  it('aligns labelled controls to the bottom of the row', () => {
+    expect(css).toMatch(/\.row\.labelled \{ align-items: flex-end; \}/);
+  });
+
+  it('lets labelled fields share the row width on narrow screens', () => {
+    expect(css).toContain('.row.labelled > label.mini { flex: 1 1 6rem;');
+  });
+});
