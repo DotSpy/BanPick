@@ -16,16 +16,16 @@ const httpsUrl = z
     }
   }, 'must be a valid https:// URL');
 
-const item = z.object({
+export const itemSchema = z.object({
   id: z.string().trim().min(1).max(60),
   name,
   image: httpsUrl.optional(),
   tags: z.record(z.string(), tagValue).optional(),
 });
 
-const pool = z.object({ items: z.array(item).min(1).max(500), scope: z.enum(['global', 'shared', 'exclusive']).optional(), iconSize: z.enum(['small', 'medium', 'large']).optional() });
+export const poolSchema = z.object({ items: z.array(itemSchema).min(1).max(500), scope: z.enum(['global', 'shared', 'exclusive']).optional(), iconSize: z.enum(['small', 'medium', 'large']).optional() });
 
-const tagging = z.object({
+export const taggingSchema = z.object({
   assignment: z.enum(['chosen', 'fixed', 'none']),
   tag: tagValue.optional(),
   values: z.array(tagValue).min(2).max(20).optional(),
@@ -34,7 +34,7 @@ const tagging = z.object({
   seats: z.object({ A: tagValue, B: tagValue }).optional(),
 });
 
-const step = z.object({
+export const stepSchema = z.object({
   team,
   action: z.enum(['pick', 'ban', 'choose']),
   pool: z.string().optional(),
@@ -49,16 +49,16 @@ const step = z.object({
 });
 
 /** With two values and sameTag forbid, one choice assigns both teams; otherwise each team needs its own. */
-const tagsKnown = (chosenBy: Set<string>, t: z.infer<typeof tagging>) =>
+const tagsKnown = (chosenBy: Set<string>, t: z.infer<typeof taggingSchema>) =>
   chosenBy.size >= (t.sameTag === 'forbid' && t.values?.length === 2 ? 1 : 2);
 
 export const presetSchema = z
   .object({
     version: z.literal(1),
     name,
-    tagging,
-    pools: z.record(z.string(), pool),
-    steps: z.array(step).min(1).max(200),
+    tagging: taggingSchema,
+    pools: z.record(z.string(), poolSchema),
+    steps: z.array(stepSchema).min(1).max(200),
     pauses: z.object({ between: z.boolean() }).default({ between: false }),
   })
   .superRefine((p, ctx) => {

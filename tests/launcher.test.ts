@@ -62,6 +62,16 @@ describe('launcher', () => {
     expect((root.querySelector('select') as HTMLSelectElement).value).toBe('one');
   });
 
+  it('shows the Build with AI tab only after it is selected', () => {
+    const root = mount();
+    const tab = [...root.querySelectorAll('[role=tab]')].find((t) => t.textContent === 'Build with AI') as HTMLElement;
+
+    const before = (root.querySelectorAll('[role=tabpanel]')[1] as HTMLElement).hidden;
+    tab.click();
+
+    expect([before, (root.querySelectorAll('[role=tabpanel]')[1] as HTMLElement).hidden, tab.getAttribute('aria-selected')]).toEqual([true, false, 'true']);
+  });
+
   it('puts each preset under its labelled group', () => {
     const root = mount();
 

@@ -1,3 +1,4 @@
+import { aiPanel } from './ai-panel';
 import { btn, h } from './dom';
 import { linksPanel } from './links';
 import type { Preset } from './model';
@@ -22,11 +23,26 @@ export function mountLauncher(root: HTMLElement, d: LauncherDeps) {
   const chosen = () => d.groups.flatMap((g) => g.presets).find((p) => p.id === pick.value)!;
   const load = () => d.onEditCopy(structuredClone(chosen().preset));
   pick.addEventListener('change', load);
-  root.replaceChildren(
-    h('h2', { textContent: 'Start from a built-in preset' }),
+  const presets = h(
+    'div', { role: 'tabpanel' },
     h('label', {}, 'Preset ', pick),
     btn('Create room', () => result.replaceChildren(h('p', { className: 'hint', role: 'status', textContent: 'Room created. Send everyone this one link; each person chooses Team A, Team B or Watch after opening it.' }), linksPanel([roomLink(d.base, d.newId(), `builtin-${chosen().id}`)]))),
     btn('Edit copy', load, { className: 'secondary' }),
     result,
   );
+  const ai = h('div', { role: 'tabpanel' }, aiPanel(d.onEditCopy));
+  root.replaceChildren(h('h2', { textContent: 'Start a draft' }), tabs([['Built-in presets', presets], ['Build with AI', ai]]));
+}
+
+/** Tab buttons that show one panel at a time; the first tab is selected. */
+function tabs(items: [string, HTMLElement][]): HTMLElement {
+  const buttons = items.map(([label]) => h('button', { type: 'button', role: 'tab', className: 'tab', textContent: label }));
+  const select = (at: number) =>
+    items.forEach(([, panel], i) => {
+      panel.hidden = i !== at;
+      buttons[i].setAttribute('aria-selected', String(i === at));
+    });
+  buttons.forEach((b, i) => b.addEventListener('click', () => select(i)));
+  select(0);
+  return h('div', { className: 'tabs' }, h('div', { role: 'tablist', className: 'tablist' }, ...buttons), ...items.map(([, panel]) => panel));
 }
