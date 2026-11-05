@@ -312,3 +312,8 @@ button.commit:hover:not(:disabled) { background: var(--commit-hover); border-col
   .tl { flex-direction: row; justify-content: flex-start; width: auto; min-height: var(--tap); padding: var(--s-2) var(--s-3); text-align: left; }
   .tl-body { flex: 1; }
 }
+
+/* Press-and-hold image preview */
+.icon-img { -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; }
+.preview-overlay { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: var(--s-4); background: rgba(0, 0, 0, 0.72); pointer-events: none; }
+.preview-img { min-width: min(16rem, 90vw); max-width: min(90vw, 40rem); max-height: 80vh; object-fit: contain; border-radius: var(--radius, 8px); background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
