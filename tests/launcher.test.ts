@@ -42,14 +42,26 @@ describe('launcher', () => {
     { id: 'one', preset: makePreset([step('A', 'ban', 'maps')]) },
     { id: 'two', preset: { ...makePreset([step('B', 'ban', 'maps')]), name: 'Second' } },
   ];
+  const groups = [
+    { label: 'Built-in presets', presets: presets.slice(0, 1) },
+    { label: 'WARNO presets', presets: presets.slice(1) },
+  ];
   const mount = (onEditCopy = (_p: unknown) => {}) => {
     const root = document.createElement('div');
-    mountLauncher(root, { presets, base: 'http://h/', newId: () => 'room1', onEditCopy });
+    mountLauncher(root, { groups, base: 'http://h/', newId: () => 'room1', onEditCopy });
     return root;
   };
 
   it('lists the built-in presets by name', () => {
     expect([...mount().querySelectorAll('option')].map((o) => o.textContent)).toContain('Second');
+  });
+
+  it('puts each preset under its labelled group', () => {
+    const root = mount();
+
+    const groupsShown = [...root.querySelectorAll('optgroup')].map((g) => [g.label, [...g.querySelectorAll('option')].map((o) => o.value)]);
+
+    expect(groupsShown).toEqual([['Built-in presets', ['one']], ['WARNO presets', ['two']]]);
   });
 
   it('creates a room with one shared link', () => {

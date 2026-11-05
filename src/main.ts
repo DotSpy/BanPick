@@ -13,7 +13,7 @@ import { Room } from './room/room';
 import { firestoreDraftStore } from './room/firestore';
 import { mountRoom } from './room/view';
 import { parseRoute, roomLink } from './route';
-import { builtinPresets } from './builtins';
+import { builtinPresets, presetGroups } from './builtins';
 import type { Preset } from './model';
 
 document.querySelector('.app-header')?.append(widthControl(), themeToggle());
@@ -54,7 +54,7 @@ async function openBuilder(code: string) {
       }
     : undefined;
   const builder = mountBuilder(builderEl, initial, onSave);
-  mountLauncher(launcherEl, { presets: builtinPresets, base: base(), newId: shortId, onEditCopy: builder.set });
+  mountLauncher(launcherEl, { groups: presetGroups, base: base(), newId: shortId, onEditCopy: builder.set });
 }
 
 const base = () => location.origin + location.pathname;

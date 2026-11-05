@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { builtinPresets } from '../src/builtins';
+import { builtinPresets, presetGroups } from '../src/builtins';
 import { applyPick, autoChoice, currentTurn, setReady, createState, type DraftState } from '../src/draft';
 import { examplePresets } from '../src/examples';
 import { availableList } from '../src/rules';
@@ -105,5 +105,13 @@ describe('Fixed sides, blind picks', () => {
     const picks = example('fixed-sides-blind').steps.filter((s) => s.action === 'pick');
 
     expect(picks.map((s) => [s.blind, s.reveal])).toEqual([[true, 'end'], [true, 'end']]);
+  });
+});
+
+describe('preset groups', () => {
+  it('keeps every built-in preset in exactly one launcher group', () => {
+    const grouped = presetGroups.flatMap((g) => g.presets.map((p) => p.id));
+
+    expect(grouped.sort()).toEqual(builtinPresets.map((b) => b.id).sort());
   });
 });

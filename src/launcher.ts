@@ -3,8 +3,13 @@ import { linksPanel } from './links';
 import type { Preset } from './model';
 import { roomLink } from './route';
 
-export interface LauncherDeps {
+export interface PresetGroup {
+  label: string;
   presets: { id: string; preset: Preset }[];
+}
+
+export interface LauncherDeps {
+  groups: PresetGroup[];
   base: string;
   newId: () => string;
   onEditCopy: (p: Preset) => void;
@@ -12,9 +17,9 @@ export interface LauncherDeps {
 
 /** Lets a user start a room from a built-in preset, or load a copy of it into the builder. */
 export function mountLauncher(root: HTMLElement, d: LauncherDeps) {
-  const pick = h('select', { ariaLabel: 'Built-in preset' }, ...d.presets.map((p) => h('option', { value: p.id, textContent: p.preset.name }))) as HTMLSelectElement;
+  const pick = h('select', { ariaLabel: 'Built-in preset' }, ...d.groups.map((g) => h('optgroup', { label: g.label }, ...g.presets.map((p) => h('option', { value: p.id, textContent: p.preset.name }))))) as HTMLSelectElement;
   const result = h('div');
-  const chosen = () => d.presets.find((p) => p.id === pick.value)!;
+  const chosen = () => d.groups.flatMap((g) => g.presets).find((p) => p.id === pick.value)!;
   const load = () => d.onEditCopy(structuredClone(chosen().preset));
   pick.addEventListener('change', load);
   root.replaceChildren(
