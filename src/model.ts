@@ -47,6 +47,8 @@ export interface Step {
   blind?: boolean;
   /** "end" or the index of the step after which a blind choice is shown. */
   reveal?: 'end' | number;
+  /** The acting captain may also resolve each turn of the step with a random available item (pick and ban only). */
+  random?: boolean;
 }
 
 export interface Preset {
@@ -69,6 +71,7 @@ export interface Turn {
   restrict?: 'tag';
   blind?: boolean;
   reveal?: 'end' | number;
+  random?: boolean;
   /** Index of the preset step this turn came from. */
   step: number;
 }
@@ -81,6 +84,8 @@ export interface Entry {
   target: string;
   itemId: string;
   auto: boolean;
+  /** The captain used the Random button; the item was drawn from the available ones. */
+  random?: boolean;
   /** Uid of the browser that committed a manual pick. Auto-picks have none. */
   by?: string;
 }

@@ -45,6 +45,7 @@ const step = z.object({
   restrict: z.literal('tag').optional(),
   blind: z.boolean().optional(),
   reveal: z.union([z.literal('end'), z.number().int().min(0)]).optional(),
+  random: z.boolean().optional(),
 });
 
 /** With two values and sameTag forbid, one choice assigns both teams; otherwise each team needs its own. */
@@ -108,6 +109,7 @@ export const presetSchema = z
         if (s.count !== 1) bad(at('count'), 'must be 1 for "choose"');
         if (s.restrict) bad(at('restrict'), 'not allowed for "choose"');
         if (s.blind) bad(at('blind'), 'not allowed for "choose"');
+        if (s.random) bad(at('random'), 'not allowed for "choose"');
       } else {
         if (!s.pool) bad(at('pool'), 'required for pick and ban');
         else if (!p.pools[s.pool]) bad(at('pool'), `unknown pool "${s.pool}"`);

@@ -5,7 +5,7 @@ export function expandSteps(steps: Step[]): Turn[] {
   return steps.flatMap((s, step) =>
     Array.from({ length: s.count }, (): Turn => {
       const target = s.action === 'choose' ? s.tag! : s.pool!;
-      return { team: s.team, action: s.action, target, timer: s.timer ?? 0, pause: s.pause, restrict: s.restrict, blind: s.blind, reveal: s.reveal, step };
+      return { team: s.team, action: s.action, target, timer: s.timer ?? 0, pause: s.pause, restrict: s.restrict, blind: s.blind, reveal: s.reveal, random: s.random, step };
     }),
   );
 }

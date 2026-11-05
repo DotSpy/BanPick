@@ -321,7 +321,7 @@ describe('step row labels', () => {
 
     mountBuilder(root, p);
 
-    expect([...root.querySelectorAll('ol li.row.labelled > label.mini')].map((l) => l.firstChild!.textContent)).toEqual(['Team', 'Action', 'Pool', 'Count', 'Timer (s)', 'Blind']);
+    expect([...root.querySelectorAll('ol li.row.labelled > label.mini')].map((l) => l.firstChild!.textContent)).toEqual(['Team', 'Action', 'Pool', 'Count', 'Timer (s)', 'Blind', 'Random']);
   });
 
   it('leaves no unlabelled select in a step row', () => {

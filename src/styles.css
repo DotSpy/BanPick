@@ -51,7 +51,11 @@
   --radius: 10px;
   --radius-sm: 6px;
   --tap: 44px;
+  --app-max: 52rem;
 }
+
+:root[data-width='wide'] { --app-max: 90rem; }
+:root[data-width='full'] { --app-max: none; }
 
 :root[data-theme='light'] {
   color-scheme: light;
@@ -109,10 +113,12 @@ body {
 .app-header a { color: var(--header-text); font-size: var(--fs-lg); font-weight: 700; text-decoration: none; letter-spacing: 0.02em; }
 .app-header span { color: var(--header-muted); font-size: var(--fs-sm); }
 
-.app-header .theme-toggle { margin-left: auto; min-height: 36px; background: transparent; color: var(--header-text); border-color: var(--header-muted); }
+.app-header .width-control { margin-left: auto; min-height: 36px; color: var(--header-muted); font-size: var(--fs-sm); }
+.app-header .width-control select { min-height: 36px; padding: var(--s-1) var(--s-2); }
+.app-header .theme-toggle { margin-left: 0; min-height: 36px; background: transparent; color: var(--header-text); border-color: var(--header-muted); }
 .app-header .theme-toggle:hover:not(:disabled) { background: rgb(255 255 255 / 14%); }
 
-#app { max-width: 52rem; margin: 0 auto; padding: var(--s-4); }
+#app { max-width: var(--app-max); margin: 0 auto; padding: var(--s-4); }
 #app > div, #app > form.name {
   background: var(--surface);
   border: 1px solid var(--line);

@@ -121,11 +121,11 @@ function checkTurn(state: DraftState, team: Team, itemId: string): string | null
   return null;
 }
 
-export function applyPick(state: DraftState, team: Team, itemId: string, now: number, auto: boolean): string | null {
+export function applyPick(state: DraftState, team: Team, itemId: string, now: number, auto: boolean, random = false): string | null {
   const err = checkTurn(state, team, itemId);
   if (err) return err;
   const turn = currentTurn(state)!;
-  state.history.push({ index: state.turnIndex, team, action: turn.action, target: turn.target, itemId, auto });
+  state.history.push({ index: state.turnIndex, team, action: turn.action, target: turn.target, itemId, auto, ...(random ? { random } : {}) });
   state.selection = null;
   goto(state, state.turnIndex + 1, now, true);
   return null;
@@ -155,7 +155,8 @@ export function verifyState(state: DraftState): string | null {
     if (!e.auto && owner !== null && e.by !== owner) {
       return `${state.teams[e.team].name} "${e.action} ${e.target}" at step ${e.index + 1} was not requested by its seat owner`;
     }
-    const err = applyPick(fresh, e.team, e.itemId, 0, e.auto);
+    if (e.random && !turn.random) return `Entry ${e.index + 1} is marked random but the step does not allow it`;
+    const err = applyPick(fresh, e.team, e.itemId, 0, e.auto, e.random);
     if (err) return `Entry ${e.index + 1} is illegal: ${err}`;
   }
   if (state.phase === 'lobby' && (state.history.length > 0 || state.turnIndex !== 0)) return 'A draft in the lobby cannot have history';
@@ -176,6 +177,13 @@ export function randomAvailable(state: DraftState): string | null {
   const turn = currentTurn(state);
   const l = turn ? availableList(state, turn) : [];
   return l.length ? l[Math.floor(Math.random() * l.length)] : null;
+}
+
+/** Resolves the current turn with a random available item; only for steps that allow it. */
+export function applyRandom(state: DraftState, team: Team, now: number): string | null {
+  if (!currentTurn(state)?.random) return 'Random is not enabled for this step';
+  const id = randomAvailable(state);
+  return id ? applyPick(state, team, id, now, false, true) : 'Nothing available';
 }
 
 /** Stores the acting team's clicked item (or clears it with null). */

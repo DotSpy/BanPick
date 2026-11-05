@@ -13,6 +13,7 @@ export interface RoomPort {
   integrity: string | null;
   subscribe(fn: () => void): () => void;
   act(itemId: string): Promise<void>;
+  random(): Promise<void>;
   select(itemId: string | null): Promise<void>;
   claim(team: Team): Promise<void>;
   release(): Promise<void>;
@@ -120,6 +121,7 @@ export function mountRoom(root: HTMLElement, room: RoomPort, now: () => number =
       if (s.confirm && viewer && !s.confirm[viewer]) body.push(btn('Confirm', () => void room.confirmNext()));
       if (s.confirm && viewer && s.confirm[viewer]) body.push(h('p', { className: 'hint', textContent: 'You confirmed. Waiting for the other captain\u2026' }));
       body.push(h('div', { className: 'items' }, ...availableList(s, turn).map((id) => itemButton(s, turn, id, !myTurn, s.selection?.team === viewer && s.selection?.itemId === id, () => void room.select(id)))));
+      if (myTurn && turn.random) body.push(btn('Random', () => void room.random(), { className: 'secondary' }));
       if (myTurn && s.selection) body.push(btn(`Confirm ${nameOf(s, s.selection.itemId)}`, () => void room.act(s.selection!.itemId), { className: 'commit' }));
     } else {
       body.push(h('p', { className: 'turn finished', textContent: 'Draft finished' }));
@@ -130,7 +132,7 @@ export function mountRoom(root: HTMLElement, room: RoomPort, now: () => number =
         h('li', { className: `${e.action} team-${e.team}` },
           `${s.teams[e.team].name}: ${e.action} `,
           e.itemId ? icon(s, e.action, e.itemId) : '',
-          `${e.itemId ? nameOf(s, e.itemId) : '(hidden)'}${e.auto ? ' (auto)' : ''}`),
+          `${e.itemId ? nameOf(s, e.itemId) : '(hidden)'}${e.auto ? ' (auto)' : ''}${e.random ? ' (random)' : ''}`),
       )),
     );
     content.replaceChildren(...body);

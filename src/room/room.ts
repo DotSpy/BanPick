@@ -1,5 +1,5 @@
 import {
-  applyPick, autoChoice, confirmNext, createState, currentTurn, resumeFromPause, setReady, setSelection,
+  applyPick, applyRandom, autoChoice, confirmNext, createState, currentTurn, resumeFromPause, setReady, setSelection,
   type DraftState,
 } from '../draft';
 import type { Preset, Team } from '../model';
@@ -69,8 +69,14 @@ export class Room {
     return this.mutateAndEmit((s) => decideClaim(s, this.d.uid, team, name).refusal);
   }
   act(itemId: string) {
+    return this.commit((s, team, now) => applyPick(s, team, itemId, now, false));
+  }
+  random() {
+    return this.commit(applyRandom);
+  }
+  private commit(apply: (s: DraftState, team: Team, now: number) => string | null) {
     return this.seated((s, team, now) => {
-      const err = applyPick(s, team, itemId, now, false);
+      const err = apply(s, team, now);
       if (!err) s.history[s.history.length - 1].by = this.d.uid;
       return err;
     });

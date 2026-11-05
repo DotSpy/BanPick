@@ -104,11 +104,12 @@ export function updateStep(p: Preset, index: number, patch: Partial<Step>): Pres
     if (s.action === 'choose') {
       s.tag = c.tagging.tag;
       s.count = 1;
-      for (const k of ['pool', 'restrict', 'blind', 'reveal'] as const) delete s[k];
+      for (const k of ['pool', 'restrict', 'blind', 'reveal', 'random'] as const) delete s[k];
     } else {
       delete s.tag;
       s.pool ??= Object.keys(c.pools)[0];
       if (s.action !== 'pick') delete s.blind;
+      if (!s.random) delete s.random;
     }
     if (!s.blind) delete s.reveal;
     else s.reveal ??= 'end';
