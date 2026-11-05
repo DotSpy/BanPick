@@ -3,6 +3,7 @@ import { builtinPresets, presetGroups } from '../src/builtins';
 import { applyPick, autoChoice, currentTurn, setReady, createState, type DraftState } from '../src/draft';
 import { examplePresets } from '../src/examples';
 import { availableList } from '../src/rules';
+import { validatePreset } from '../src/schema';
 
 const example = (id: string) => examplePresets.find((p) => p.id === id)!.preset;
 const sideOf = (s: DraftState, itemId: string) => s.preset.pools.units.items.find((i) => i.id === itemId)!.tags!.side;
@@ -113,5 +114,33 @@ describe('preset groups', () => {
     const grouped = presetGroups.flatMap((g) => g.presets.map((p) => p.id));
 
     expect(grouped.sort()).toEqual(builtinPresets.map((b) => b.id).sort());
+  });
+});
+describe('MOBA draft', () => {
+  const moba = () => example('moba-draft');
+
+  it('passes preset validation', () => {
+    expect(validatePreset(moba()).ok).toBe(true);
+  });
+
+  it('is the first entry of the Built-in presets group', () => {
+    expect(presetGroups[0].presets[0].id).toBe('moba-draft');
+  });
+
+  it('follows the ban, pick, ban, pick, ban, pick order', () => {
+    const order = moba().steps.map((s) => `${s.team}${s.action === 'ban' ? 'b' : 'p'}`).join(' ');
+
+    expect(order).toBe('Ab Bb Ab Bb Ap Bp Ab Bb Bp Ap Bp Ap Ab Bb Bp Ap Bp Ap');
+  });
+
+  it('gives each team five picks from one shared pool without tags or blind picks', () => {
+    const p = moba();
+    const picks = (t: string) => p.steps.filter((s) => s.team === t && s.action === 'pick').length;
+
+    expect([picks('A'), picks('B'), Object.keys(p.pools), p.tagging.assignment, p.steps.some((s) => s.blind)]).toEqual([5, 5, ['heroes'], 'none', false]);
+  });
+
+  it('uses no image links', () => {
+    expect(moba().pools.heroes.items.some((i) => i.image)).toBe(false);
   });
 });

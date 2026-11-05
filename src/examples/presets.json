@@ -1,6 +1,235 @@
 {
     "presets":  [
                     {
+                        "id": "moba-draft",
+                        "preset": {
+                            "version": 1,
+                            "name": "MOBA draft (2 teams, shared pool)",
+                            "steps": [
+                                {
+                                    "team": "A",
+                                    "action": "ban",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30,
+                                    "pause": "ready"
+                                },
+                                {
+                                    "team": "B",
+                                    "action": "ban",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "A",
+                                    "action": "ban",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "B",
+                                    "action": "ban",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "A",
+                                    "action": "pick",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "B",
+                                    "action": "pick",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "A",
+                                    "action": "ban",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "B",
+                                    "action": "ban",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "B",
+                                    "action": "pick",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "A",
+                                    "action": "pick",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "B",
+                                    "action": "pick",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "A",
+                                    "action": "pick",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "A",
+                                    "action": "ban",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "B",
+                                    "action": "ban",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "B",
+                                    "action": "pick",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "A",
+                                    "action": "pick",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "B",
+                                    "action": "pick",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "A",
+                                    "action": "pick",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                }
+                            ],
+                            "pools": {
+                                "heroes": {
+                                    "scope": "shared",
+                                    "items": [
+                                        {
+                                            "id": "anti-mage",
+                                            "name": "Anti-Mage"
+                                        },
+                                        {
+                                            "id": "axe",
+                                            "name": "Axe"
+                                        },
+                                        {
+                                            "id": "bane",
+                                            "name": "Bane"
+                                        },
+                                        {
+                                            "id": "bloodseeker",
+                                            "name": "Bloodseeker"
+                                        },
+                                        {
+                                            "id": "crystal-maiden",
+                                            "name": "Crystal Maiden"
+                                        },
+                                        {
+                                            "id": "drow-ranger",
+                                            "name": "Drow Ranger"
+                                        },
+                                        {
+                                            "id": "earthshaker",
+                                            "name": "Earthshaker"
+                                        },
+                                        {
+                                            "id": "juggernaut",
+                                            "name": "Juggernaut"
+                                        },
+                                        {
+                                            "id": "mirana",
+                                            "name": "Mirana"
+                                        },
+                                        {
+                                            "id": "morphling",
+                                            "name": "Morphling"
+                                        },
+                                        {
+                                            "id": "phantom-assassin",
+                                            "name": "Phantom Assassin"
+                                        },
+                                        {
+                                            "id": "pudge",
+                                            "name": "Pudge"
+                                        },
+                                        {
+                                            "id": "sniper",
+                                            "name": "Sniper"
+                                        },
+                                        {
+                                            "id": "sven",
+                                            "name": "Sven"
+                                        },
+                                        {
+                                            "id": "tidehunter",
+                                            "name": "Tidehunter"
+                                        },
+                                        {
+                                            "id": "vengeful-spirit",
+                                            "name": "Vengeful Spirit"
+                                        },
+                                        {
+                                            "id": "viper",
+                                            "name": "Viper"
+                                        },
+                                        {
+                                            "id": "warlock",
+                                            "name": "Warlock"
+                                        },
+                                        {
+                                            "id": "witch-doctor",
+                                            "name": "Witch Doctor"
+                                        },
+                                        {
+                                            "id": "zeus",
+                                            "name": "Zeus"
+                                        }
+                                    ]
+                                }
+                            },
+                            "tagging": {
+                                "assignment": "none"
+                            },
+                            "pauses": {
+                                "between": false
+                            }
+                        }
+                    },
+                    {
                         "id":  "captains-mode",
                         "preset":  {
                                        "version":  1,

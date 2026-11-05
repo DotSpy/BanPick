@@ -56,6 +56,12 @@ describe('launcher', () => {
     expect([...mount().querySelectorAll('option')].map((o) => o.textContent)).toContain('Second');
   });
 
+  it('selects the first listed preset by default', () => {
+    const root = mount();
+
+    expect((root.querySelector('select') as HTMLSelectElement).value).toBe('one');
+  });
+
   it('puts each preset under its labelled group', () => {
     const root = mount();
 
