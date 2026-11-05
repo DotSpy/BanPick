@@ -152,3 +152,37 @@ describe('timeline tag choices', () => {
     expect(timeline(s.preset, s).querySelector('img')!.getAttribute('src')).toBe('https://x.test/n.png');
   });
 });
+
+describe('timeline outcome chips', () => {
+  const timed = () => makePreset([step('A', 'ban', 'maps', { timer: 30, restrict: undefined }), step('B', 'ban', 'maps', { timer: 30 })]);
+
+  it('drops the timer from a finished chip', () => {
+    const s = started(timed());
+    applyPick(s, 'A', 'map-1', 0, false);
+
+    expect(chips(timeline(s.preset, s))[0].querySelector('.tl-meta')).toBeNull();
+  });
+
+  it('keeps the timer on the current and upcoming chips', () => {
+    const s = started(timed());
+    applyPick(s, 'A', 'map-1', 0, false);
+
+    expect(chips(timeline(s.preset, s))[1].querySelector('.tl-meta')!.textContent).toBe('30s');
+  });
+
+  it('drops the restriction text from a finished chip', () => {
+    const preset = makePreset([step('A', 'choose', 'side'), step('A', 'pick', 'divisions', { restrict: 'tag' })], { tagging: sideTagging() });
+    const s = started(preset);
+    applyPick(s, 'A', 'nato', 0, false);
+    applyPick(s, 'A', 'cav', 0, false);
+
+    expect(chips(timeline(s.preset, s))[1].textContent).not.toContain('restricted');
+  });
+
+  it('still marks a hidden blind pick as blind', () => {
+    const s = started(makePreset([step('A', 'pick', 'maps', { blind: true, timer: 30 }), step('B', 'ban', 'maps')]));
+    applyPick(s, 'A', 'map-1', 0, false);
+
+    expect(chips(timeline(s.preset, s, 'B'))[0].querySelector('.tl-meta')!.textContent).toBe('blind');
+  });
+});

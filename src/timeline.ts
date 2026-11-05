@@ -32,7 +32,8 @@ export function timeline(preset: Preset, state?: TimelineState, viewer: Team | n
     const { item, size } = entry?.itemId ? choiceOf(preset, t.action, entry.itemId) : { item: undefined, size: 'medium' as const };
     const result = !entry ? t.target : entry.itemId ? item?.name ?? entry.itemId : 'hidden';
     const label = `${i + 1}. ${who} ${t.action} ${t.target}${entry ? `: ${result}` : status === 'skipped' ? ' (skipped: nothing available)' : ''}${t.timer ? ` · ${t.timer}s` : ''}`;
-    const meta = [t.timer ? `${t.timer}s` : '', t.blind ? 'blind' : '', t.random ? 'random allowed' : '', entry?.random ? 'random' : '', t.restrict ? `restricted by ${preset.tagging.tag}` : ''].filter(Boolean).join(' \u00b7 ');
+    // A finished turn shows only its outcome; rules and timers belong to current and upcoming chips.
+    const meta = entry ? [!entry.itemId ? 'blind' : '', entry.random ? 'random' : ''].filter(Boolean).join(' \u00b7 ') : [t.timer ? `${t.timer}s` : '', t.blind ? 'blind' : '', t.random ? 'random allowed' : '', t.restrict ? `restricted by ${preset.tagging.tag}` : ''].filter(Boolean).join(' \u00b7 ');
     const chip = h('li', { className: `tl team-${t.team} ${t.action} ${status}`, title: label, ...(status === 'current' ? { ariaCurrent: 'step' } : {}) },
       h('span', { className: 'tl-head' }, h('b', { textContent: t.team }), h('i', { textContent: LABEL[t.action] })),
       entry?.itemId ? itemIcon(item, '', size) : '',
