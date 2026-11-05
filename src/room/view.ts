@@ -3,7 +3,7 @@ import { currentTurn, type DraftState } from '../draft';
 import type { Team, Turn } from '../model';
 import { itemIcon } from '../icon';
 import { timeline } from '../timeline';
-import { availableList, choiceOf, findItem, visibleHistory } from '../rules';
+import { choiceOf, findItem, isAvailable, shownList, visibleHistory } from '../rules';
 
 /** What the view needs from a room; `Room` satisfies it. */
 export interface RoomPort {
@@ -43,7 +43,8 @@ const icon = (s: DraftState, action: Turn['action'], id: string) => {
 
 function itemButton(s: DraftState, turn: Turn, id: string, disabled: boolean, selected: boolean, onClick: () => void) {
   const { item, size } = choiceOf(s.preset, turn.action, id);
-  return h('button', { type: 'button', disabled, className: `${selected ? 'selected ' : ''}tile-${size}`.trim(), ariaPressed: String(selected), onclick: onClick }, itemIcon(item, '', size), item?.name ?? id);
+  const banned = !isAvailable(s, turn, id);
+  return h('button', { type: 'button', disabled: disabled || banned, className: `${selected ? 'selected ' : ''}${banned ? 'banned ' : ''}tile-${size}`.trim(), ariaPressed: String(selected), onclick: onClick }, itemIcon(item, '', size), item?.name ?? id);
 }
 
 /** Seat choice for a browser without a seat: free seats can be claimed, taken ones are disabled, Watch is always available. */
@@ -123,7 +124,7 @@ export function mountRoom(root: HTMLElement, room: RoomPort, now: () => number =
       if (viewer && !myTurn && !s.confirm && !s.pausing) body.push(h('p', { className: 'hint', textContent: `Waiting for ${s.teams[turn.team].name}…` }));
       if (s.confirm && viewer && !s.confirm[viewer]) body.push(btn('Confirm', () => void room.confirmNext()));
       if (s.confirm && viewer && s.confirm[viewer]) body.push(h('p', { className: 'hint', textContent: 'You confirmed. Waiting for the other captain\u2026' }));
-      const options = availableList(s, turn);
+      const options = shownList(s, turn, visibleHistory(s, turn, viewer));
       body.push(h('div', { className: options.length <= FEW_OPTIONS ? 'items few' : 'items' }, ...options.map((id) => itemButton(s, turn, id, !myTurn, s.selection?.team === viewer && s.selection?.itemId === id, () => void room.select(id)))));
       if (myTurn && turn.random) body.push(btn('Random', () => void room.random(), { className: 'secondary' }));
       if (myTurn && s.selection) body.push(btn(`Confirm ${nameOf(s, s.selection.itemId)}`, () => void room.act(s.selection!.itemId), { className: 'commit' }));

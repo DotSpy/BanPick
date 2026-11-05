@@ -317,3 +317,9 @@ button.commit:hover:not(:disabled) { background: var(--commit-hover); border-col
 .icon-img { -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; }
 .preview-overlay { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: var(--s-4); background: rgba(0, 0, 0, 0.72); pointer-events: none; }
 .preview-img { min-width: min(16rem, 90vw); max-width: min(90vw, 40rem); max-height: 80vh; object-fit: contain; border-radius: var(--radius, 8px); background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
+
+/* Banned options stay in place: greyed out with a red cross */
+.items button.banned { position: relative; overflow: hidden; color: var(--muted); text-decoration: line-through; cursor: not-allowed; }
+.items button.banned .icon-img, .items button.banned .icon-fallback { opacity: 0.5; filter: grayscale(1); }
+.items button.banned::before, .items button.banned::after { content: ''; position: absolute; left: 50%; top: 50%; width: 140%; height: 3px; background: var(--danger); transform: translate(-50%, -50%) rotate(35deg); pointer-events: none; }
+.items button.banned::after { transform: translate(-50%, -50%) rotate(-35deg); }
