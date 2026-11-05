@@ -1,26 +1,40 @@
 /* Design tokens: one place for colour, type, spacing, radius. */
+/* Dark is the default; light overrides the colour tokens when data-theme="light". */
 :root {
-  --bg: #f3f5f9;
-  --surface: #ffffff;
-  --surface-2: #eef1f6;
-  --text: #182033;
-  --muted: #4d586d;
-  --line: #cfd6e2;
+  color-scheme: dark;
+  --bg: #0f1420;
+  --surface: #182033;
+  --surface-2: #212b42;
+  --text: #e6eaf2;
+  --muted: #a9b4c8;
+  --line: #34405a;
 
-  --primary: #0b57d0;
-  --primary-hover: #0a47a8;
-  --on-primary: #ffffff;
-  --focus: #0b57d0;
+  --primary: #7db0ff;
+  --primary-hover: #a0c4ff;
+  --on-primary: #0b1220;
+  --focus: #a0c4ff;
 
-  --team-a: #1d4ed8;
-  --team-b: #b45309;
-  --success: #146c2e;
-  --success-bg: #e4f4e8;
-  --warning: #8a5a00;
-  --warning-bg: #fff3d6;
-  --danger: #a4161a;
-  --danger-bg: #fde8e8;
-  --info-bg: #e7efff;
+  --team-a: #7aa7ff;
+  --team-b: #f0a35a;
+  --success: #6fd58a;
+  --success-bg: #12301c;
+  --warning: #f2c04d;
+  --warning-bg: #3a2c0a;
+  --warning-line: #b58a1a;
+  --danger: #ff9a9a;
+  --danger-bg: #3d1618;
+  --info-bg: #17294d;
+  --commit: #2e8f4d;
+  --commit-hover: #38a85c;
+  --on-commit: #06130b;
+  --pause-line: #a78bfa;
+  --pause-bg: #2a2150;
+  --pause-text: #cdbdff;
+  --header-bg: #0a0e17;
+  --header-text: #ffffff;
+  --header-muted: #aab4c8;
+  --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 4px 12px rgb(0 0 0 / 30%);
+  --strike: rgb(255 154 154 / 50%);
 
   --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
@@ -28,7 +42,6 @@
   --fs-md: 1rem;
   --fs-lg: 1.25rem;
   --fs-xl: 1.75rem;
-
   --s-1: 0.25rem;
   --s-2: 0.5rem;
   --s-3: 0.75rem;
@@ -38,7 +51,41 @@
   --radius: 10px;
   --radius-sm: 6px;
   --tap: 44px;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f3f5f9;
+  --surface: #ffffff;
+  --surface-2: #eef1f6;
+  --text: #182033;
+  --muted: #4d586d;
+  --line: #cfd6e2;
+  --primary: #0b57d0;
+  --primary-hover: #0a47a8;
+  --on-primary: #ffffff;
+  --focus: #0b57d0;
+  --team-a: #1d4ed8;
+  --team-b: #b45309;
+  --success: #146c2e;
+  --success-bg: #e4f4e8;
+  --warning: #8a5a00;
+  --warning-bg: #fff3d6;
+  --warning-line: #d49a00;
+  --danger: #a4161a;
+  --danger-bg: #fde8e8;
+  --info-bg: #e7efff;
+  --commit: #146c2e;
+  --commit-hover: #0f5223;
+  --on-commit: #ffffff;
+  --pause-line: #7c3aed;
+  --pause-bg: #f1eafe;
+  --pause-text: #5b21b6;
+  --header-bg: #182033;
+  --header-text: #ffffff;
+  --header-muted: #c3cbdb;
   --shadow: 0 1px 2px rgb(24 32 51 / 8%), 0 4px 12px rgb(24 32 51 / 6%);
+  --strike: var(--strike);
 }
 
 * { box-sizing: border-box; }
@@ -56,11 +103,14 @@ body {
   align-items: baseline;
   gap: var(--s-3);
   padding: var(--s-3) var(--s-4);
-  background: var(--text);
-  color: #fff;
+  background: var(--header-bg);
+  color: var(--header-text);
 }
-.app-header a { color: #fff; font-size: var(--fs-lg); font-weight: 700; text-decoration: none; letter-spacing: 0.02em; }
-.app-header span { color: #c3cbdb; font-size: var(--fs-sm); }
+.app-header a { color: var(--header-text); font-size: var(--fs-lg); font-weight: 700; text-decoration: none; letter-spacing: 0.02em; }
+.app-header span { color: var(--header-muted); font-size: var(--fs-sm); }
+
+.app-header .theme-toggle { margin-left: auto; min-height: 36px; background: transparent; color: var(--header-text); border-color: var(--header-muted); }
+.app-header .theme-toggle:hover:not(:disabled) { background: rgb(255 255 255 / 14%); }
 
 #app { max-width: 52rem; margin: 0 auto; padding: var(--s-4); }
 #app > div, #app > form.name {
@@ -167,7 +217,7 @@ form.name[hidden] { display: none; }
 
 .turn { margin: var(--s-4) 0 var(--s-3); padding: var(--s-3) var(--s-4); border-radius: var(--radius); border-left: 6px solid var(--line); background: var(--surface-2); font-size: var(--fs-lg); font-weight: 700; display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-2); }
 .turn.mine { border-color: var(--success); background: var(--success-bg); color: var(--success); }
-.turn.paused, .turn.confirming { border-color: #d49a00; background: var(--warning-bg); color: var(--warning); }
+.turn.paused, .turn.confirming { border-color: var(--warning-line); background: var(--warning-bg); color: var(--warning); }
 .turn.finished { border-color: var(--primary); background: var(--info-bg); color: var(--primary); }
 .timer { margin-left: auto; padding: var(--s-1) var(--s-3); border-radius: 999px; background: var(--surface); color: var(--text); font-variant-numeric: tabular-nums; font-size: var(--fs-lg); }
 .timer:empty { display: none; }
@@ -182,14 +232,14 @@ form.name[hidden] { display: none; }
 .icon-fallback { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); font-weight: 700; flex: none; }
 .icon-fallback::before { content: attr(data-initial); }
 .history .icon-fallback, .row .icon-fallback { width: 24px; height: 24px; margin: 0 var(--s-1); font-size: var(--fs-sm); }
-button.commit { width: 100%; background: var(--success); border-color: var(--success); font-size: var(--fs-lg); min-height: 52px; }
-button.commit:hover:not(:disabled) { background: #0f5223; border-color: #0f5223; }
+button.commit { width: 100%; background: var(--commit); border-color: var(--commit); color: var(--on-commit); font-size: var(--fs-lg); min-height: 52px; }
+button.commit:hover:not(:disabled) { background: var(--commit-hover); border-color: var(--commit-hover); }
 
 .history { margin-top: var(--s-4); }
 .history li { padding: var(--s-2) var(--s-3); margin-bottom: var(--s-1); border-left: 4px solid var(--line); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; background: var(--surface-2); }
 .history li.team-A { border-left-color: var(--team-a); }
 .history li.team-B { border-left-color: var(--team-b); }
-.history li.ban { color: var(--danger); text-decoration: line-through; text-decoration-color: rgb(164 22 26 / 45%); }
+.history li.ban { color: var(--danger); text-decoration: line-through; text-decoration-color: var(--strike); }
 .history li.pick, .history li.choose { font-weight: 600; }
 
 .error-box { border-left: 6px solid var(--danger); }
@@ -231,7 +281,7 @@ button.commit:hover:not(:disabled) { background: #0f5223; border-color: #0f5223;
 .tl.upcoming { border-style: dashed; opacity: 0.75; }
 .tl.skipped { border-style: dashed; text-decoration: line-through; color: var(--muted); }
 .tl.current { opacity: 1; box-shadow: 0 0 0 3px var(--focus); font-weight: 700; }
-.tl.pause { border: 2px dashed #7c3aed; background: #f1eafe; color: #5b21b6; }
+.tl.pause { border: 2px dashed var(--pause-line); background: var(--pause-bg); color: var(--pause-text); }
 .tl.pause.done { opacity: 0.6; }
 @media (max-width: 40rem) {
   .timeline { flex-direction: column; flex-wrap: nowrap; }
