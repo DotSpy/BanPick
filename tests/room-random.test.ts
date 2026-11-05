@@ -1,4 +1,4 @@
-﻿// @vitest-environment happy-dom
+// @vitest-environment happy-dom
 import { describe, expect, it } from 'vitest';
 import { Room } from '../src/room/room';
 import { mountRoom } from '../src/room/view';
@@ -22,10 +22,10 @@ const mount = (r: Room) => {
   const dispose = mountRoom(root, r);
   return { root, dispose };
 };
-const randomButton = (root: HTMLElement) => [...root.querySelectorAll('button')].find((x) => x.textContent === 'Random');
+const randomButton = (root: HTMLElement) => root.querySelector<HTMLButtonElement>('.items button.random-tile');
 const flush = () => new Promise((r) => setTimeout(r, 0));
 
-describe('room view: random button', () => {
+describe('room view: random tile', () => {
   it('shows Random to the acting captain when the step allows it', async () => {
     const { a } = await setup(true);
     const { root, dispose } = mount(a);
@@ -34,11 +34,35 @@ describe('room view: random button', () => {
     dispose();
   });
 
-  it('hides Random from the waiting captain', async () => {
+  it('shows Random disabled to the waiting captain', async () => {
     const { b } = await setup(true);
     const { root, dispose } = mount(b);
 
-    expect(randomButton(root)).toBeUndefined();
+    expect(randomButton(root)?.disabled).toBe(true);
+    dispose();
+  });
+
+  it('shows Random enabled to the acting captain', async () => {
+    const { a } = await setup(true);
+    const { root, dispose } = mount(a);
+
+    expect(randomButton(root)?.disabled).toBe(false);
+    dispose();
+  });
+
+  it('puts Random last, inside the options grid', async () => {
+    const { a } = await setup(true);
+    const { root, dispose } = mount(a);
+
+    expect(root.querySelector('.items')!.lastElementChild).toBe(randomButton(root));
+    dispose();
+  });
+
+  it('does not add a separate Random button outside the grid', async () => {
+    const { a } = await setup(true);
+    const { root, dispose } = mount(a);
+
+    expect([...root.querySelectorAll('button')].filter((x) => x.textContent?.includes('Random')).length).toBe(1);
     dispose();
   });
 
@@ -46,7 +70,7 @@ describe('room view: random button', () => {
     const { a } = await setup(false);
     const { root, dispose } = mount(a);
 
-    expect(randomButton(root)).toBeUndefined();
+    expect(randomButton(root)).toBeNull();
     dispose();
   });
 
