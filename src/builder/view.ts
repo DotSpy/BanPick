@@ -121,6 +121,20 @@ export function mountBuilder(root: HTMLElement, initial: Preset, onSave?: (p: Pr
     }
   };
 
+  const tagBlock = () => {
+    const { tag, values, images } = preset.tagging;
+    if (!values?.length) return [];
+    return [
+      h('h3', {}, `${tag ?? 'Tag'} values`),
+      h('ul', {}, ...values.map((value) =>
+        h('li', { className: 'row' },
+          h('span', { textContent: value }),
+          input(`${value} image link`, images?.[value] ?? '', (v) => update(E.setTagImage(preset, value, v)), { placeholder: 'https://\u2026' }),
+          itemIcon({ name: value, image: images?.[value] }, value),
+        ))),
+    ];
+  };
+
   function render() {
     const focused = [...root.querySelectorAll(FOCUSABLE)].indexOf(document.activeElement as Element);
     const result = validatePreset(preset);
@@ -132,6 +146,7 @@ export function mountBuilder(root: HTMLElement, initial: Preset, onSave?: (p: Pr
       h('h3', {}, 'Pools'),
       ...Object.keys(preset.pools).map(poolBlock),
       btn('Add pool', () => update(E.addPool(preset, `pool-${Object.keys(preset.pools).length + 1}`)), { className: 'secondary' }),
+      ...tagBlock(),
       h('h3', {}, 'Steps'),
       h('p', { className: 'hint', textContent: 'Each step: team, action, pool, count, timer in seconds (0 = no timer), blind.' }),
       h('ol', {}, ...preset.steps.map(stepRow)),

@@ -30,6 +30,17 @@ export function setTagging(p: Preset, tagging: Preset['tagging']): Preset {
   });
 }
 
+/** Sets or clears (empty link) the image of one tag value. */
+export function setTagImage(p: Preset, value: string, url: string): Preset {
+  return edit(p, (c) => {
+    const images = { ...c.tagging.images };
+    if (url.trim()) images[value] = url;
+    else delete images[value];
+    if (Object.keys(images).length) c.tagging.images = images;
+    else delete c.tagging.images;
+  });
+}
+
 // Pools
 
 export function addPool(p: Preset, name: string): Preset {

@@ -259,3 +259,56 @@ describe('pool icon size', () => {
     expect(saved[0].pools.items.iconSize).toBe('small');
   });
 });
+
+describe('tag value images', () => {
+  const tagged = (images?: Record<string, string>): Preset => ({ ...newPreset(), tagging: { assignment: 'chosen', tag: 'team-color', values: ['red', 'blue'], ...(images ? { images } : {}) } });
+  const mountTagged = (p: Preset) => {
+    const root = document.createElement('div');
+    mountBuilder(root, p);
+    return root;
+  };
+  const field = (root: HTMLElement, value: string) => root.querySelector(`[aria-label="${value} image link"]`) as HTMLInputElement;
+  const flush = () => new Promise((r) => setTimeout(r, 0));
+
+  it('shows an image field for every value of any tag', () => {
+    const root = mountTagged(tagged());
+
+    expect([field(root, 'red') !== null, field(root, 'blue') !== null]).toEqual([true, true]);
+  });
+
+  it('shows no value section for presets without tag values', () => {
+    const root = mountTagged(newPreset());
+
+    expect(root.textContent).not.toContain('values');
+  });
+
+  it('previews the image of a value that has a link', () => {
+    const root = mountTagged(tagged({ red: 'https://x.test/r.png' }));
+
+    expect(root.querySelector('img[alt="red"]')!.getAttribute('src')).toBe('https://x.test/r.png');
+  });
+
+  it('stores a typed link in the preset', async () => {
+    const root = document.createElement('div');
+    const b = mountBuilder(root, tagged());
+    const el = field(root, 'blue');
+
+    el.value = 'https://x.test/b.png';
+    el.dispatchEvent(new Event('change'));
+    await flush();
+
+    expect(b.get().tagging.images).toEqual({ blue: 'https://x.test/b.png' });
+  });
+
+  it('reports a non-https link as an error', async () => {
+    const root = document.createElement('div');
+    mountBuilder(root, tagged());
+    const el = field(root, 'red');
+
+    el.value = 'http://x.test/r.png';
+    el.dispatchEvent(new Event('change'));
+    await flush();
+
+    expect(root.querySelector('.errors')!.textContent).toContain('tagging.images');
+  });
+});

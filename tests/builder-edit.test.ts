@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   addItem, addPool, addStep, formatTags, moveStep, newPreset, parseTags, removePool, removeStep,
-  setPoolIconSize, setPoolScope, setTagging, updateItem, updateStep,
+  setPoolIconSize, setPoolScope, setTagImage, setTagging, updateItem, updateStep,
 } from '../src/builder/edit';
 import { validatePreset } from '../src/schema';
 import type { Preset } from '../src/model';
@@ -141,5 +141,33 @@ describe('setPoolIconSize', () => {
     const next = setPoolIconSize(p, 'items', 'large');
 
     expect([next.pools.items.iconSize, p.pools.items.iconSize]).toEqual(['large', undefined]);
+  });
+});
+
+describe('setTagImage', () => {
+  const tagged = (): Preset => ({ ...newPreset(), tagging: { assignment: 'chosen', tag: 'side', values: ['nato', 'pact'] } });
+
+  it('sets the image of one value', () => {
+    expect(setTagImage(tagged(), 'nato', 'https://x.test/n.png').tagging.images).toEqual({ nato: 'https://x.test/n.png' });
+  });
+
+  it('removes the image and the empty map when the link is cleared', () => {
+    const withImage = setTagImage(tagged(), 'nato', 'https://x.test/n.png');
+
+    expect(setTagImage(withImage, 'nato', '  ').tagging.images).toBeUndefined();
+  });
+
+  it('keeps other values images', () => {
+    const one = setTagImage(tagged(), 'nato', 'https://x.test/n.png');
+
+    expect(setTagImage(one, 'pact', 'https://x.test/p.png').tagging.images).toEqual({ nato: 'https://x.test/n.png', pact: 'https://x.test/p.png' });
+  });
+
+  it('does not change the original preset', () => {
+    const p = tagged();
+
+    setTagImage(p, 'nato', 'https://x.test/n.png');
+
+    expect(p.tagging.images).toBeUndefined();
   });
 });
