@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { itemIcon } from '../src/icon';
 import { validatePreset } from '../src/schema';
@@ -10,7 +11,7 @@ describe('itemIcon', () => {
   });
 
   it('renders an img with the link and the given alt text', () => {
-    const el = itemIcon({ name: 'Red 1', image: 'https://x.test/a.png' }, 'Red 1') as HTMLImageElement;
+    const el = (itemIcon({ name: 'Red 1', image: 'https://x.test/a.png' }, 'Red 1') as HTMLElement).querySelector('img')!;
 
     expect([el.tagName, el.getAttribute('src'), el.alt]).toEqual(['IMG', 'https://x.test/a.png', 'Red 1']);
   });
@@ -20,10 +21,26 @@ describe('itemIcon', () => {
     const el = itemIcon({ name: 'red 1', image: 'https://x.test/a.png' }) as HTMLElement;
     host.append(el);
 
-    el.dispatchEvent(new Event('error'));
+    el.querySelector('img')!.dispatchEvent(new Event('error'));
 
     const fb = host.querySelector('.icon-fallback')!;
     expect([host.querySelector('img'), fb.getAttribute('data-initial'), fb.getAttribute('title')]).toEqual([null, 'R', 'red 1']);
+  });
+});
+
+describe('icon enlarge hint', () => {
+  const el = () => itemIcon({ name: 'Red 1', image: 'https://x.test/a.png' }) as HTMLElement;
+
+  it('titles the icon "Hold to enlarge"', () => {
+    expect(el().title).toBe('Hold to enlarge');
+  });
+
+  it('adds a decorative magnifier badge', () => {
+    expect(el().querySelector('.icon-zoom')?.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('keeps the badge from taking pointer events', () => {
+    expect(readFileSync('src/styles.css', 'utf8')).toMatch(/\.icon-zoom \{[^}]*pointer-events: none/);
   });
 });
 
@@ -47,11 +64,11 @@ describe('item icon size', () => {
   const item = { name: 'Red 1', image: 'https://x.test/a.png' };
 
   it('defaults to medium', () => {
-    expect((itemIcon(item) as HTMLElement).classList.contains('icon-medium')).toBe(true);
+    expect((itemIcon(item) as HTMLElement).querySelector('img')!.classList.contains('icon-medium')).toBe(true);
   });
 
   it('applies the requested size class', () => {
-    expect((itemIcon(item, '', 'large') as HTMLElement).classList.contains('icon-large')).toBe(true);
+    expect((itemIcon(item, '', 'large') as HTMLElement).querySelector('img')!.classList.contains('icon-large')).toBe(true);
   });
 
   it('keeps the size on the placeholder when the image fails', () => {
@@ -59,7 +76,7 @@ describe('item icon size', () => {
     const el = itemIcon(item, '', 'large') as HTMLElement;
     host.append(el);
 
-    el.dispatchEvent(new Event('error'));
+    el.querySelector('img')!.dispatchEvent(new Event('error'));
 
     expect(host.querySelector('.icon-fallback')!.classList.contains('icon-large')).toBe(true);
   });

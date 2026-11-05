@@ -21,8 +21,9 @@ describe('icon press-and-hold preview', () => {
     onClick = vi.fn();
     const button = document.createElement('button');
     button.addEventListener('click', onClick);
-    img = itemIcon({ name: 'Red', image: 'https://example.com/r.png' }, 'Red') as HTMLElement;
-    button.append(img);
+    const icon = itemIcon({ name: 'Red', image: 'https://example.com/r.png' }, 'Red') as HTMLElement;
+    img = icon.querySelector('img')!;
+    button.append(icon);
     document.body.append(button);
     uninstall = installIconPreview();
   });
