@@ -131,7 +131,8 @@ a { color: var(--primary); }
 
 /* Form controls */
 label { display: inline-flex; align-items: center; gap: var(--s-2); min-height: var(--tap); max-width: 100%; }
-label > select { min-width: 0; flex: 1 1 8rem; }
+label:not(.mini) > select { min-width: 0; flex: 1 1 8rem; }
+label.mini > select { min-width: 0; }
 label.field { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s-1); min-height: 0; margin-top: var(--s-3); font-weight: 600; font-size: var(--fs-sm); }
 label.mini { flex-direction: column; align-items: flex-start; gap: 0; min-height: 0; font-size: 0.75rem; color: var(--muted); }
 
@@ -183,6 +184,9 @@ section h3 { margin-top: 0; }
 ol, ul { margin: var(--s-2) 0; padding-left: 0; list-style: none; }
 .row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); padding: var(--s-2) 0; border-bottom: 1px solid var(--line); }
 .row.labelled { align-items: flex-end; }
+.row.labelled > label.mini { justify-content: flex-start; gap: var(--s-1); }
+.row.labelled select, .row.labelled input[type='number'], .row.labelled button { box-sizing: border-box; height: 40px; min-height: 40px; }
+.row.labelled input[type='checkbox'] { height: 24px; min-height: 0; margin: 8px 0; }
 #app .row > button { margin: 0; }
 .row:last-child { border-bottom: 0; }
 .history { counter-reset: n; }

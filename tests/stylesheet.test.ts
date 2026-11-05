@@ -52,6 +52,14 @@ describe('builder step row', () => {
     expect(css).toMatch(/\.row\.labelled \{ align-items: flex-end; \}/);
   });
 
+  it('gives selects, number inputs and buttons one fixed height', () => {
+    expect(css).toMatch(/\.row\.labelled select[^{]*\{[^}]*height: 40px/);
+  });
+
+  it('does not stretch selects inside column labels', () => {
+    expect(css).toContain('label:not(.mini) > select { min-width: 0; flex: 1 1 8rem; }');
+  });
+
   it('lets labelled fields share the row width on narrow screens', () => {
     expect(css).toContain('.row.labelled > label.mini { flex: 1 1 6rem;');
   });

@@ -51,6 +51,11 @@ const afterMaps = (id = '1v1', side = 'nato') => {
 };
 
 describe('built-in presets', () => {
+  it('offers no 4v4 or 5v5 preset', () => {
+    expect(builtinPresets.some((p) => p.id === '4v4')).toBe(false);
+    expect(builtinPresets.some((p) => p.id === '5v5')).toBe(false);
+  });
+
   it.each(builtinPresets.map((p) => p.id))('%s passes preset validation', (id) => {
     expect(validatePreset(preset(id)).ok).toBe(true);
   });

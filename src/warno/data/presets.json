@@ -26,22 +26,6 @@
       ]
     },
     {
-      "id": "4v4", "name": "4v4", "teamSize": 4, "pool": "4v4",
-      "steps": [
-        "A ban map 30", "B ban map 30", "A ban map 30", "B ban map 30", "A ban map 30", "B ban map 30", "A pick map 30", "A pick side 30",
-        "A ban division 30 10", "B ban division 30 10", "A ban division 30 10", "B ban division 30 10", "A ban division 30 10", "B ban division 30 10", "A ban division 30 10", "B ban division 30 10",
-        "A pick division 45 10", "B pick division 45 10", "A pick division 45 10", "B pick division 45 10", "A pick division 45 10", "B pick division 45 10", "A pick division 45 10", "B pick division 45 10"
-      ]
-    },
-    {
-      "id": "5v5", "name": "5v5", "teamSize": 5, "pool": "5v5",
-      "steps": [
-        "A ban map 30", "B ban map 30", "A ban map 30", "B ban map 30", "A ban map 30", "B ban map 30", "A pick map 30", "A pick side 30",
-        "A ban division 30 10", "B ban division 30 10", "A ban division 30 10", "B ban division 30 10", "A ban division 30 10", "B ban division 30 10", "A ban division 30 10", "B ban division 30 10", "A ban division 30 10", "B ban division 30 10",
-        "A pick division 45 10", "B pick division 45 10", "A pick division 45 10", "B pick division 45 10", "A pick division 45 10", "B pick division 45 10", "A pick division 45 10", "B pick division 45 10", "A pick division 45 10", "B pick division 45 10"
-      ]
-    },
-    {
       "id": "open-exclusive", "name": "2v2 Open pool - exclusive (one by one)", "teamSize": 2, "pool": "2v2", "divisionPick": "exclusive",
       "steps": [
         "A ban map 30", "B ban map 30", "A ban map 30", "B ban map 30", "A pick map 30",
