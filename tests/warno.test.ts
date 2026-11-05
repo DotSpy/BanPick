@@ -328,3 +328,18 @@ describe('built-in side images', () => {
     });
   });
 });
+
+describe('WARNO random steps', () => {
+  it('enables random on every pick and ban step of every built-in preset', () => {
+    const steps = builtinPresets.flatMap((p) => p.preset.steps).filter((s) => s.action !== 'choose');
+
+    expect(steps.length).toBeGreaterThan(0);
+    expect(steps.every((s) => s.random === true)).toBe(true);
+  });
+
+  it('keeps side choices non-random', () => {
+    const steps = builtinPresets.flatMap((p) => p.preset.steps).filter((s) => s.action === 'choose');
+
+    expect(steps.some((s) => s.random)).toBe(false);
+  });
+});

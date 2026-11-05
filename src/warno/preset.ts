@@ -19,6 +19,7 @@ interface WarnoPresetDef {
   name: string;
   pool?: string;
   divisionPick?: 'shared' | 'exclusive';
+  random?: boolean;
   pauseBetweenSteps?: boolean;
   steps: string[];
 }
@@ -34,7 +35,7 @@ const mapIdsOfPool = (pool: string): string[] => {
 
 const SIDES = ['nato', 'pact'];
 
-function parseStep(text: string): Step {
+function parseStep(text: string, random = false): Step {
   const [team, action, target, timer = '0', pause] = text.trim().split(/\s+/);
   const step: Step = { team: team as Step['team'], action: action as Step['action'], count: 1 };
   if (target === 'side') {
@@ -44,6 +45,7 @@ function parseStep(text: string): Step {
     step.pool = target === 'map' ? 'maps' : 'divisions';
     if (target === 'division') step.restrict = 'tag';
   }
+  if (random && step.action !== 'choose') step.random = true;
   if (Number(timer) > 0) step.timer = Number(timer);
   if (pause === 'ready') step.pause = 'ready';
   else if (pause !== undefined && Number(pause) > 0) step.pause = Number(pause);
@@ -61,7 +63,7 @@ function mergeRepeats(steps: Step[]): Step[] {
 }
 
 export function warnoPreset(def: WarnoPresetDef): Preset {
-  const steps = mergeRepeats(def.steps.map(parseStep));
+  const steps = mergeRepeats(def.steps.map((s) => parseStep(s, def.random)));
   const usesSides = steps.some((s) => s.action === 'choose');
   const mapIds = new Set((def.pool ?? '').split(',').flatMap((p) => mapIdsOfPool(p.trim())));
   // Without a side step there is nothing to restrict by.
