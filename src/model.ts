@@ -8,8 +8,12 @@ export interface Item {
   tags?: Record<string, string>;
 }
 
+export type IconSize = 'small' | 'medium' | 'large';
+
 export interface Pool {
   items: Item[];
+  /** Size of the item icons everywhere this pool's items are shown (default medium). */
+  iconSize?: IconSize;
   /** global: any pick or ban removes the item for everyone (default). shared: each team has its own pool; a pick removes it for that team only. exclusive: like shared, but a pick removes it for both teams. In both, a ban removes it from the opponent's options only. */
   scope?: 'global' | 'shared' | 'exclusive';
 }

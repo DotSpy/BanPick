@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   addItem, addPool, addStep, formatTags, moveStep, newPreset, parseTags, removePool, removeStep,
-  setPoolScope, setTagging, updateItem, updateStep,
+  setPoolIconSize, setPoolScope, setTagging, updateItem, updateStep,
 } from '../src/builder/edit';
 import { validatePreset } from '../src/schema';
 import type { Preset } from '../src/model';
@@ -131,5 +131,15 @@ describe('builder edit: steps', () => {
     const p = withBlind();
 
     expect(moveStep(p, 0, 9)).toBe(p);
+  });
+});
+
+describe('setPoolIconSize', () => {
+  it('sets the size on the pool without touching the original', () => {
+    const p = newPreset();
+
+    const next = setPoolIconSize(p, 'items', 'large');
+
+    expect([next.pools.items.iconSize, p.pools.items.iconSize]).toEqual(['large', undefined]);
   });
 });

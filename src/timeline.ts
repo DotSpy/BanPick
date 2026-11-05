@@ -1,7 +1,7 @@
 import { h } from './dom';
 import { itemIcon } from './icon';
 import type { Entry, Preset, Team } from './model';
-import { findItem, visibleHistory } from './rules';
+import { findItem, iconSizeOf, visibleHistory } from './rules';
 import { turnsOf } from './turns';
 
 /** What the timeline needs to know about a running draft. */
@@ -35,7 +35,7 @@ export function timeline(preset: Preset, state?: TimelineState, viewer: Team | n
     const meta = [t.timer ? `${t.timer}s` : '', t.blind ? 'blind' : '', t.restrict ? `restricted by ${preset.tagging.tag}` : ''].filter(Boolean).join(' \u00b7 ');
     const chip = h('li', { className: `tl team-${t.team} ${t.action} ${status}`, title: label, ...(status === 'current' ? { ariaCurrent: 'step' } : {}) },
       h('span', { className: 'tl-head' }, h('b', { textContent: t.team }), h('i', { textContent: LABEL[t.action] })),
-      entry?.itemId ? itemIcon(item) : '',
+      entry?.itemId ? itemIcon(item, '', iconSizeOf(preset, entry.itemId)) : '',
       h('span', { className: 'tl-body', textContent: result }),
       meta ? h('span', { className: 'tl-meta', textContent: meta }) : '',
     );

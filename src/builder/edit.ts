@@ -1,4 +1,4 @@
-import type { Item, Preset, Step, Team } from '../model';
+import type { IconSize, Item, Preset, Step, Team } from '../model';
 
 /**
  * Pure editing operations for the builder. Each returns a new preset and never mutates its input.
@@ -45,6 +45,10 @@ export function removePool(p: Preset, name: string): Preset {
 
 export function setPoolScope(p: Preset, name: string, scope: NonNullable<Preset['pools'][string]['scope']>): Preset {
   return edit(p, (c) => void (c.pools[name].scope = scope));
+}
+
+export function setPoolIconSize(p: Preset, name: string, size: IconSize): Preset {
+  return edit(p, (c) => void (c.pools[name].iconSize = size));
 }
 
 export function addItem(p: Preset, pool: string, item: Item): Preset {

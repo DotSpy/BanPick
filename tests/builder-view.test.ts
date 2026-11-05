@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { mountBuilder } from '../src/builder/view';
 import { newPreset } from '../src/builder/edit';
+import type { Preset } from '../src/model';
 
 const mount = () => {
   const root = document.createElement('div');
@@ -230,3 +231,31 @@ describe('builder view', () => {
 });
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
+
+describe('pool icon size', () => {
+  it('shows the pool size and previews item icons with it', () => {
+    const p = newPreset();
+    p.pools.items.iconSize = 'large';
+    p.pools.items.items[0].image = 'https://x.test/a.png';
+    const root = document.createElement('div');
+
+    mountBuilder(root, p);
+
+    expect([(root.querySelector('[aria-label="items icon size"]') as HTMLSelectElement).value, root.querySelector('.row img')!.classList.contains('icon-large')]).toEqual(['large', true]);
+  });
+
+  it('saves the chosen size into the preset', async () => {
+    const root = document.createElement('div');
+    const saved: Preset[] = [];
+    mountBuilder(root, newPreset(), async (pr) => (saved.push(pr), { ok: true, links: [] }));
+    const sel = root.querySelector('[aria-label="items icon size"]') as HTMLSelectElement;
+
+    sel.value = 'small';
+    sel.dispatchEvent(new Event('change'));
+    await new Promise((r) => setTimeout(r, 0));
+    [...root.querySelectorAll('button')].find((b) => /save/i.test(b.textContent ?? ''))!.click();
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(saved[0].pools.items.iconSize).toBe('small');
+  });
+});

@@ -1,13 +1,17 @@
-import type { Entry, Preset, Team, Turn } from './model';
+import type { Entry, IconSize, Preset, Team, Turn } from './model';
 import { turnsOf } from './turns';
 
-export const findItem = (preset: Preset, id: string) => {
+const locate = (preset: Preset, id: string) => {
   for (const pool of Object.values(preset.pools)) {
     const item = pool.items.find((i) => i.id === id);
-    if (item) return item;
+    if (item) return { item, pool };
   }
   return undefined;
 };
+
+export const findItem = (preset: Preset, id: string) => locate(preset, id)?.item;
+
+export const iconSizeOf = (preset: Preset, id: string): IconSize => locate(preset, id)?.pool.iconSize ?? 'medium';
 
 export const otherTeam = (t: Team): Team => (t === 'A' ? 'B' : 'A');
 

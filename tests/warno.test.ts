@@ -291,3 +291,11 @@ describe('WARNO: history replay', () => {
     expect(verifyState(s)).toMatch(/illegal/);
   });
 });
+
+describe('built-in map icon size', () => {
+  it('shows maps large and leaves divisions at the default', () => {
+    const p = builtinPresets[0].preset;
+
+    expect([p.pools.maps.iconSize, p.pools.divisions.iconSize]).toEqual(['large', undefined]);
+  });
+});

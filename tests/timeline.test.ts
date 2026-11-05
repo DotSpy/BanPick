@@ -130,3 +130,15 @@ describe('timeline pause state', () => {
     expect(timeline(s.preset, s).querySelector('.pause')!.className).toContain('current');
   });
 });
+
+describe('timeline icon size', () => {
+  it("uses the item pool's icon size", () => {
+    const p = makePreset([step('A', 'ban', 'maps')]);
+    p.pools.maps.items[0].image = 'https://x.test/m.png';
+    p.pools.maps.iconSize = 'large';
+    const s = started(p);
+    applyPick(s, 'A', 'map-1', 0, false);
+
+    expect(timeline(s.preset, s).querySelector('img')!.classList.contains('icon-large')).toBe(true);
+  });
+});

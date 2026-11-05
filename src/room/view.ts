@@ -3,7 +3,7 @@ import { currentTurn, type DraftState } from '../draft';
 import type { Team, Turn } from '../model';
 import { itemIcon } from '../icon';
 import { timeline } from '../timeline';
-import { availableList, findItem, visibleHistory } from '../rules';
+import { availableList, findItem, iconSizeOf, visibleHistory } from '../rules';
 
 /** What the view needs from a room; `Room` satisfies it. */
 export interface RoomPort {
@@ -34,7 +34,8 @@ const secondsLeft = (s: DraftState, now: number) => (s.deadline ? Math.max(0, Ma
 
 function itemButton(s: DraftState, id: string, disabled: boolean, selected: boolean, onClick: () => void) {
   const item = itemOf(s, id);
-  return h('button', { type: 'button', disabled, className: selected ? 'selected' : '', ariaPressed: String(selected), onclick: onClick }, itemIcon(item), item?.name ?? id);
+  const size = iconSizeOf(s.preset, id);
+  return h('button', { type: 'button', disabled, className: `${selected ? 'selected ' : ''}tile-${size}`.trim(), ariaPressed: String(selected), onclick: onClick }, itemIcon(item, '', size), item?.name ?? id);
 }
 
 /** Seat choice for a browser without a seat: free seats can be claimed, taken ones are disabled, Watch is always available. */
@@ -124,7 +125,7 @@ export function mountRoom(root: HTMLElement, room: RoomPort, now: () => number =
       h('ol', { className: 'history' }, ...visibleHistory(s, turn, viewer).map((e) =>
         h('li', { className: `${e.action} team-${e.team}` },
           `${s.teams[e.team].name}: ${e.action} `,
-          e.itemId ? itemIcon(itemOf(s, e.itemId)) : '',
+          e.itemId ? itemIcon(itemOf(s, e.itemId), '', iconSizeOf(s.preset, e.itemId)) : '',
           `${e.itemId ? nameOf(s, e.itemId) : '(hidden)'}${e.auto ? ' (auto)' : ''}`),
       )),
     );

@@ -72,6 +72,7 @@ export function warnoPreset(def: WarnoPresetDef): Preset {
     tagging: usesSides ? { assignment: 'chosen', tag: 'side', values: SIDES, sameTag: 'forbid' } : { assignment: 'none' },
     pools: {
       maps: {
+        iconSize: 'large',
         items: maps
           .filter((m) => mapIds.has(m.id))
           .map((m) => ({ id: m.id, name: m.name, ...(m.icon ? { image: iconUrl(m.icon) } : {}) })),

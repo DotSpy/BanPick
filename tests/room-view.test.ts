@@ -289,6 +289,36 @@ describe('room view guidance', () => {
 
     expect(root.querySelector('.history img')?.getAttribute('src')).toBe('https://x.test/m.png');
   });
+
+  const withSize = async (size?: 'small' | 'large') => {
+    const preset = makePreset([step('A', 'ban', 'maps'), step('B', 'ban', 'maps')]);
+    preset.pools.maps.items[0].image = 'https://x.test/m.png';
+    if (size) preset.pools.maps.iconSize = size;
+    const { a } = await started(preset);
+    return { a, preset };
+  };
+
+  it('renders pool buttons with the large tile and icon classes', async () => {
+    const { a } = await withSize('large');
+    const { root } = view(a);
+
+    expect([root.querySelector('.items button')!.classList.contains('tile-large'), root.querySelector('.items img')!.classList.contains('icon-large')]).toEqual([true, true]);
+  });
+
+  it('renders medium when the pool sets no size', async () => {
+    const { a } = await withSize();
+    const { root } = view(a);
+
+    expect(root.querySelector('.items img')!.classList.contains('icon-medium')).toBe(true);
+  });
+
+  it('renders the large icon in the history too', async () => {
+    const { a, preset } = await withSize('large');
+    await a.act(preset.pools.maps.items[0].id);
+    const { root } = view(a);
+
+    expect(root.querySelector('.history img')!.classList.contains('icon-large')).toBe(true);
+  });
 });
 
 describe('seat choice', () => {

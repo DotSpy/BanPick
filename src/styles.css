@@ -226,12 +226,17 @@ form.name[hidden] { display: none; }
 .items button { justify-content: flex-start; background: var(--surface); color: var(--text); border-color: var(--line); font-weight: 500; }
 .items button:hover:not(:disabled) { background: var(--info-bg); border-color: var(--primary); color: var(--text); }
 .items button.selected, .items button.selected:hover:not(:disabled) { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+.items button.tile-large { flex-direction: column; justify-content: center; text-align: center; gap: var(--s-2); }
 .items button:disabled { background: var(--surface-2); color: var(--muted); }
-.icon-img { width: 32px; height: 32px; border-radius: 4px; object-fit: cover; vertical-align: middle; flex: none; }
-.history .icon-img, .row .icon-img { width: 24px; height: 24px; margin: 0 var(--s-1); }
-.icon-fallback { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); font-weight: 700; flex: none; }
+/* Icon size comes from the pool's iconSize (icon-small|medium|large); contexts scale it down. */
+.icon-img, .icon-fallback { --icon: 32px; width: calc(var(--icon) * var(--ctx, 1)); height: calc(var(--icon) * var(--ctx, 1)); border-radius: 4px; flex: none; }
+.icon-small { --icon: 20px; }
+.icon-large { --icon: 64px; }
+.icon-img { object-fit: cover; vertical-align: middle; }
+.history, .row { --ctx: 0.75; }
+.history .icon-img, .row .icon-img, .history .icon-fallback, .row .icon-fallback { margin: 0 var(--s-1); }
+.icon-fallback { display: inline-flex; align-items: center; justify-content: center; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); font-weight: 700; font-size: calc(var(--icon) * 0.4 * var(--ctx, 1)); }
 .icon-fallback::before { content: attr(data-initial); }
-.history .icon-fallback, .row .icon-fallback { width: 24px; height: 24px; margin: 0 var(--s-1); font-size: var(--fs-sm); }
 button.commit { width: 100%; background: var(--commit); border-color: var(--commit); color: var(--on-commit); font-size: var(--fs-lg); min-height: 52px; }
 button.commit:hover:not(:disabled) { background: var(--commit-hover); border-color: var(--commit-hover); }
 
@@ -269,7 +274,8 @@ button.commit:hover:not(:disabled) { background: var(--commit-hover); border-col
 .tl-head i { font-style: normal; font-weight: 700; letter-spacing: 0.04em; }
 .tl-body { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tl-meta { color: var(--muted); font-size: 0.6875rem; }
-.tl .icon-img, .tl .icon-fallback { width: 28px; height: 28px; margin: 0; }
+.tl { --ctx: 0.875; }
+.tl .icon-img, .tl .icon-fallback { margin: 0; }
 .tl.team-A { border-color: var(--team-a); }
 .tl.team-A b { color: var(--team-a); }
 .tl.team-B { border-color: var(--team-b); }

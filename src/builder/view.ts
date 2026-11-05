@@ -1,4 +1,4 @@
-import type { Preset, Step } from '../model';
+import type { IconSize, Preset, Step } from '../model';
 import { validatePreset } from '../schema';
 import * as E from './edit';
 import { btn, h } from '../dom';
@@ -67,6 +67,7 @@ export function mountBuilder(root: HTMLElement, initial: Preset, onSave?: (p: Pr
       'section', {},
       h('h3', {}, name),
       select(`${name} scope`, pool.scope ?? 'global', ['global', 'shared', 'exclusive'], (v) => update(E.setPoolScope(preset, name, v as 'global'))),
+      select(`${name} icon size`, pool.iconSize ?? 'medium', ['small', 'medium', 'large'], (v) => update(E.setPoolIconSize(preset, name, v as IconSize))),
       btn('Remove pool', () => update(E.removePool(preset, name)), { className: 'secondary' }),
       h(
         'ul', {},
@@ -77,7 +78,7 @@ export function mountBuilder(root: HTMLElement, initial: Preset, onSave?: (p: Pr
             input(`${name} item ${i + 1} name`, item.name, (v) => update(E.updateItem(preset, name, i, { name: v }))),
             input(`${name} item ${i + 1} tags`, E.formatTags(item.tags), (v) => update(E.updateItem(preset, name, i, { tags: E.parseTags(v) })), { placeholder: 'tag:value, …' }),
             input(`${name} item ${i + 1} image link`, item.image ?? '', (v) => update(E.updateItem(preset, name, i, { image: v })), { placeholder: 'https://…' }),
-            itemIcon(item, item.name),
+            itemIcon(item, item.name, pool.iconSize),
             btn('✕', () => update(E.removeItem(preset, name, i)), { className: 'icon', ariaLabel: `Remove ${name} item ${i + 1}` }),
           ),
         ),

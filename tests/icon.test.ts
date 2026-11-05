@@ -42,3 +42,45 @@ describe('item image schema', () => {
     expect(withImage('http://x.test/a.png')).not.toBe(true);
   });
 });
+
+describe('item icon size', () => {
+  const item = { name: 'Red 1', image: 'https://x.test/a.png' };
+
+  it('defaults to medium', () => {
+    expect((itemIcon(item) as HTMLElement).classList.contains('icon-medium')).toBe(true);
+  });
+
+  it('applies the requested size class', () => {
+    expect((itemIcon(item, '', 'large') as HTMLElement).classList.contains('icon-large')).toBe(true);
+  });
+
+  it('keeps the size on the placeholder when the image fails', () => {
+    const host = document.createElement('div');
+    const el = itemIcon(item, '', 'large') as HTMLElement;
+    host.append(el);
+
+    el.dispatchEvent(new Event('error'));
+
+    expect(host.querySelector('.icon-fallback')!.classList.contains('icon-large')).toBe(true);
+  });
+});
+
+describe('pool iconSize schema', () => {
+  const withSize = (iconSize: unknown) => {
+    const p = makePreset([step('A', 'ban', 'maps')]);
+    (p.pools.maps as { iconSize?: unknown }).iconSize = iconSize;
+    return validatePreset(p).ok;
+  };
+
+  it('stays valid without the field', () => {
+    expect(validatePreset(makePreset([step('A', 'ban', 'maps')])).ok).toBe(true);
+  });
+
+  it.each(['small', 'medium', 'large'])('accepts %s', (size) => {
+    expect(withSize(size)).toBe(true);
+  });
+
+  it('rejects an unknown size', () => {
+    expect(withSize('huge')).not.toBe(true);
+  });
+});
