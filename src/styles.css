@@ -239,6 +239,9 @@ form.name[hidden] { display: none; }
 .items button { min-width: 0; max-width: 100%; overflow-wrap: anywhere; text-align: left; justify-content: flex-start; background: var(--surface); color: var(--text); border-color: var(--line); font-weight: 500; }
 .items button:hover:not(:disabled) { background: var(--info-bg); border-color: var(--primary); color: var(--text); }
 .items button.selected, .items button.selected:hover:not(:disabled) { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+.items.few { grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); }
+.items.few button { flex-direction: column; justify-content: center; text-align: center; gap: var(--s-2); min-height: 120px; font-size: var(--fs-lg); }
+.items.few button .icon-img, .items.few button .icon-fallback { --icon: 64px; }
 .items button.tile-large { flex-direction: column; justify-content: center; text-align: center; gap: var(--s-2); }
 .items button:disabled { background: var(--surface-2); color: var(--muted); }
 /* Icon size comes from the pool's iconSize (icon-small|medium|large); contexts scale it down. */

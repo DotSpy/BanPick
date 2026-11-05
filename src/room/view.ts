@@ -23,6 +23,9 @@ export interface RoomPort {
   tick(): Promise<void>;
 }
 
+/** With this many options or fewer, the buttons render as large tiles. */
+export const FEW_OPTIONS = 4;
+
 const itemOf = (s: DraftState, id: string) => findItem(s.preset, id);
 const nameOf = (s: DraftState, id: string) => itemOf(s, id)?.name ?? id;
 
@@ -120,7 +123,8 @@ export function mountRoom(root: HTMLElement, room: RoomPort, now: () => number =
       if (viewer && !myTurn && !s.confirm && !s.pausing) body.push(h('p', { className: 'hint', textContent: `Waiting for ${s.teams[turn.team].name}…` }));
       if (s.confirm && viewer && !s.confirm[viewer]) body.push(btn('Confirm', () => void room.confirmNext()));
       if (s.confirm && viewer && s.confirm[viewer]) body.push(h('p', { className: 'hint', textContent: 'You confirmed. Waiting for the other captain\u2026' }));
-      body.push(h('div', { className: 'items' }, ...availableList(s, turn).map((id) => itemButton(s, turn, id, !myTurn, s.selection?.team === viewer && s.selection?.itemId === id, () => void room.select(id)))));
+      const options = availableList(s, turn);
+      body.push(h('div', { className: options.length <= FEW_OPTIONS ? 'items few' : 'items' }, ...options.map((id) => itemButton(s, turn, id, !myTurn, s.selection?.team === viewer && s.selection?.itemId === id, () => void room.select(id)))));
       if (myTurn && turn.random) body.push(btn('Random', () => void room.random(), { className: 'secondary' }));
       if (myTurn && s.selection) body.push(btn(`Confirm ${nameOf(s, s.selection.itemId)}`, () => void room.act(s.selection!.itemId), { className: 'commit' }));
     } else {
