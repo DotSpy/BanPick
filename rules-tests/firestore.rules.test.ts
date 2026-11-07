@@ -184,82 +184,266 @@ describe('rules: drafts, seats in the lobby', () => {
   });
 });
 
-describe('rules: drafts, state writes', () => {
-  const move = { state: 's2', turnIndex: 1, updatedAt: 2 };
+const fourTurns = makePreset([step('A', 'ban', 'maps'), step('B', 'ban', 'maps'), step('A', 'ban', 'maps'), step('B', 'ban', 'maps')]);
+const turnDraft = (over: object = {}) => ({ ...draftToDoc(createState('r', fourTurns, { A: 'A', B: 'B' }, 0), 0), ownerA: 'ua', ownerB: 'ub', phase: 'drafting', deadline: null, ...over });
+const entry = (over: object = {}) => ({ index: 0, team: 'A', action: 'ban', target: 'maps', itemId: 'map-1', auto: false, ...over });
+const overdue = { deadline: 1 };
+const live = { deadline: Date.now() + 3_600_000 };
+const later = { deadline: Date.now() + 60_000 };
+const record = (e: object, over: object = {}) => ({ history: [e], turnIndex: 1, state: 's2', updatedAt: 2, ...over });
+const afterFirst = (over: object = {}) => turnDraft({ history: [entry()], turnIndex: 1, ...over });
 
-  it('lets seat A write draft state', async () => {
-    await seed('drafts/r', draftingDraft());
+describe('rules: drafts, recording a turn', () => {
+  it('lets the acting seat record its own entry and advance one turn', async () => {
+    await seed('drafts/r', turnDraft());
 
-    await assertSucceeds(updateDoc(draftRef(as('ua')), move));
+    await assertSucceeds(updateDoc(draftRef(as('ua')), record(entry())));
   });
 
-  it('lets seat B write draft state', async () => {
-    await seed('drafts/r', draftingDraft());
+  it("refuses the other seat recording the acting team's entry", async () => {
+    await seed('drafts/r', turnDraft());
 
-    await assertSucceeds(updateDoc(draftRef(as('ub')), move));
+    await assertFails(updateDoc(draftRef(as('ub')), record(entry())));
   });
 
-  it('refuses a state write from someone without a seat', async () => {
-    await seed('drafts/r', draftingDraft());
+  it('refuses an entry for a team that is not acting', async () => {
+    await seed('drafts/r', turnDraft());
 
-    await assertFails(updateDoc(draftRef(as('spectator')), move));
+    await assertFails(updateDoc(draftRef(as('ua')), record(entry({ team: 'B' }))));
   });
 
-  it('refuses a seat owner changing seats while writing state', async () => {
-    await seed('drafts/r', draftingDraft());
+  it('refuses an entry for a different turn index', async () => {
+    await seed('drafts/r', turnDraft());
 
-    await assertFails(updateDoc(draftRef(as('ua')), { ...move, ownerB: 'ua' }));
+    await assertFails(updateDoc(draftRef(as('ua')), record(entry({ index: 1 }))));
   });
 
-  it('refuses a seat owner writing fields outside the state set', async () => {
-    await seed('drafts/r', draftingDraft());
+  it('refuses an entry with extra fields', async () => {
+    await seed('drafts/r', turnDraft());
 
-    await assertFails(updateDoc(draftRef(as('ua')), { ...move, extra: 1 }));
+    await assertFails(updateDoc(draftRef(as('ua')), record({ ...entry(), admin: true })));
+  });
+
+  it('refuses a write from someone without a seat', async () => {
+    await seed('drafts/r', turnDraft());
+
+    await assertFails(updateDoc(draftRef(as('spectator')), record(entry())));
+  });
+
+  it('refuses recording two entries in one write', async () => {
+    await seed('drafts/r', turnDraft());
+
+    await assertFails(updateDoc(draftRef(as('ua')), { history: [entry(), entry({ index: 1, team: 'B' })], turnIndex: 2, state: 's2', updatedAt: 2 }));
+  });
+
+  it('refuses moving the turn without recording an entry', async () => {
+    await seed('drafts/r', turnDraft());
+
+    await assertFails(updateDoc(draftRef(as('ua')), { turnIndex: 1, state: 's2', updatedAt: 2 }));
+  });
+
+  it('refuses recording an entry without moving the turn', async () => {
+    await seed('drafts/r', turnDraft());
+
+    await assertFails(updateDoc(draftRef(as('ua')), record(entry(), { turnIndex: 0 })));
+  });
+
+  it('refuses moving the turn backwards', async () => {
+    await seed('drafts/r', afterFirst());
+
+    await assertFails(updateDoc(draftRef(as('ua')), { turnIndex: 0, state: 's2', updatedAt: 2 }));
+  });
+
+  it('refuses moving the turn past the end of the draft', async () => {
+    await seed('drafts/r', turnDraft());
+
+    await assertFails(updateDoc(draftRef(as('ua')), record(entry(), { turnIndex: 5 })));
+  });
+
+  it('refuses a seat rewriting an entry already recorded', async () => {
+    await seed('drafts/r', afterFirst());
+
+    await assertFails(updateDoc(draftRef(as('ub')), { history: [entry({ itemId: 'other' }), entry({ index: 1, team: 'B' })], turnIndex: 2, state: 's2', updatedAt: 2 }));
+  });
+
+  it('refuses a seat deleting a recorded entry', async () => {
+    await seed('drafts/r', afterFirst());
+
+    await assertFails(updateDoc(draftRef(as('ub')), { history: [], state: 's2', updatedAt: 2 }));
+  });
+
+  it('refuses a seat changing the preset', async () => {
+    await seed('drafts/r', turnDraft());
+
+    await assertFails(updateDoc(draftRef(as('ua')), { preset: '{}', state: 's2', updatedAt: 2 }));
+  });
+
+  it('refuses a seat changing the turn order', async () => {
+    await seed('drafts/r', turnDraft());
+
+    await assertFails(updateDoc(draftRef(as('ua')), { turnTeams: ['A', 'A', 'A', 'A'], state: 's2', updatedAt: 2 }));
+  });
+
+  it('refuses a seat changing seats while writing', async () => {
+    await seed('drafts/r', turnDraft());
+
+    await assertFails(updateDoc(draftRef(as('ua')), { ...record(entry()), ownerB: 'ua' }));
+  });
+
+  it('refuses a write with fields outside the allowed set', async () => {
+    await seed('drafts/r', turnDraft());
+
+    await assertFails(updateDoc(draftRef(as('ua')), { ...record(entry()), extra: 1 }));
+  });
+
+  it('lets either seat write state that changes nothing else', async () => {
+    await seed('drafts/r', turnDraft());
+
+    await assertSucceeds(updateDoc(draftRef(as('ub')), { state: 's2', updatedAt: 2 }));
+  });
+});
+
+describe('rules: drafts, phase', () => {
+  it('lets the draft start from the lobby', async () => {
+    await seed('drafts/r', turnDraft({ phase: 'lobby' }));
+
+    await assertSucceeds(updateDoc(draftRef(as('ua')), { phase: 'drafting', state: 's2', updatedAt: 2 }));
+  });
+
+  it('refuses skipping from the lobby to done', async () => {
+    await seed('drafts/r', turnDraft({ phase: 'lobby' }));
+
+    await assertFails(updateDoc(draftRef(as('ua')), { phase: 'done', state: 's2', updatedAt: 2 }));
+  });
+
+  it('refuses reopening a finished draft', async () => {
+    await seed('drafts/r', turnDraft({ phase: 'done', turnIndex: 4 }));
+
+    await assertFails(updateDoc(draftRef(as('ua')), { phase: 'drafting', state: 's2', updatedAt: 2 }));
   });
 });
 
 describe('rules: drafts, overdue timers', () => {
-  const advance = { state: 's2', turnIndex: 1, deadline: null, updatedAt: 2 };
+  const auto = (over: object = {}) => entry({ auto: true, ...over });
 
-  it('lets anyone advance a turn whose deadline has passed', async () => {
-    await seed('drafts/r', draftingDraft({ deadline: 1 }));
+  it('lets the waiting seat commit an auto entry once the deadline has passed', async () => {
+    await seed('drafts/r', turnDraft(overdue));
 
-    await assertSucceeds(updateDoc(draftRef(as('spectator')), advance));
+    await assertSucceeds(updateDoc(draftRef(as('ub')), record(auto())));
   });
 
-  it('refuses advancing before the deadline', async () => {
-    await seed('drafts/r', draftingDraft({ deadline: Date.now() + 3_600_000 }));
+  it('lets the acting seat commit its own auto entry once the deadline has passed', async () => {
+    await seed('drafts/r', turnDraft(overdue));
 
-    await assertFails(updateDoc(draftRef(as('spectator')), advance));
+    await assertSucceeds(updateDoc(draftRef(as('ua')), record(auto())));
   });
 
-  it('refuses an overdue write that changes neither the turn nor the deadline', async () => {
-    await seed('drafts/r', draftingDraft({ deadline: 1, turnIndex: 3 }));
+  it('refuses an auto entry before the deadline', async () => {
+    await seed('drafts/r', turnDraft(live));
 
-    await assertFails(updateDoc(draftRef(as('spectator')), { ...advance, turnIndex: 3, deadline: 1 }));
+    await assertFails(updateDoc(draftRef(as('ub')), record(auto())));
   });
 
-  it('lets anyone end an overdue pause, which moves the deadline but not the turn', async () => {
-    await seed('drafts/r', draftingDraft({ deadline: 1, turnIndex: 3 }));
+  it('refuses an auto entry when there is no deadline', async () => {
+    await seed('drafts/r', turnDraft({ deadline: null }));
 
-    await assertSucceeds(updateDoc(draftRef(as('spectator')), { ...advance, turnIndex: 3, deadline: Date.now() + 30_000 }));
+    await assertFails(updateDoc(draftRef(as('ub')), record(auto())));
   });
 
-  it('refuses moving the turn backwards on an overdue draft', async () => {
-    await seed('drafts/r', draftingDraft({ deadline: 1, turnIndex: 3 }));
+  it('refuses a manual entry from the waiting seat even when overdue', async () => {
+    await seed('drafts/r', turnDraft(overdue));
 
-    await assertFails(updateDoc(draftRef(as('spectator')), { ...advance, turnIndex: 2 }));
+    await assertFails(updateDoc(draftRef(as('ub')), record(entry())));
   });
 
-  it('refuses an overdue write that changes seats', async () => {
-    await seed('drafts/r', draftingDraft({ deadline: 1 }));
+  it('refuses a spectator advancing an overdue turn', async () => {
+    await seed('drafts/r', turnDraft(overdue));
 
-    await assertFails(updateDoc(draftRef(as('spectator')), { ...advance, ownerA: 'spectator' }));
+    await assertFails(updateDoc(draftRef(as('spectator')), record(auto())));
   });
 
-  it('refuses advancing when there is no deadline', async () => {
-    await seed('drafts/r', draftingDraft({ deadline: null }));
+  it('lets a seat end an overdue pause, which moves the deadline but not the turn', async () => {
+    await seed('drafts/r', turnDraft(overdue));
 
-    await assertFails(updateDoc(draftRef(as('spectator')), advance));
+    await assertSucceeds(updateDoc(draftRef(as('ub')), { ...later, state: 's2', updatedAt: 2 }));
+  });
+
+  it('refuses an overdue advance of more than one entry', async () => {
+    await seed('drafts/r', turnDraft(overdue));
+
+    await assertFails(updateDoc(draftRef(as('ub')), { history: [auto(), auto({ index: 1, team: 'B' })], turnIndex: 2, state: 's2', updatedAt: 2 }));
+  });
+});
+
+describe('rules: drafts, confirmations', () => {
+  const waiting = (over: object = {}) => turnDraft({ confirm: { A: false, B: false }, ...over });
+
+  it('lets a seat set its own flag', async () => {
+    await seed('drafts/r', waiting());
+
+    await assertSucceeds(updateDoc(draftRef(as('ua')), { confirm: { A: true, B: false }, state: 's2', updatedAt: 2 }));
+  });
+
+  it("refuses a seat setting the other team's flag", async () => {
+    await seed('drafts/r', waiting());
+
+    await assertFails(updateDoc(draftRef(as('ua')), { confirm: { A: false, B: true }, state: 's2', updatedAt: 2 }));
+  });
+
+  it('lets the last confirmation clear the flags and start the timer', async () => {
+    await seed('drafts/r', waiting({ confirm: { A: true, B: false } }));
+
+    await assertSucceeds(updateDoc(draftRef(as('ub')), { confirm: null, ...later, state: 's2', updatedAt: 2 }));
+  });
+
+  it('refuses clearing the flags before the other team confirmed', async () => {
+    await seed('drafts/r', waiting());
+
+    await assertFails(updateDoc(draftRef(as('ua')), { confirm: null, state: 's2', updatedAt: 2 }));
+  });
+
+  it("refuses resetting the other team's flag without a new entry", async () => {
+    await seed('drafts/r', waiting({ confirm: { A: true, B: false } }));
+
+    await assertFails(updateDoc(draftRef(as('ub')), { confirm: { A: false, B: false }, state: 's2', updatedAt: 2 }));
+  });
+
+  it('lets the flags start unset when a new entry opens a confirmation', async () => {
+    await seed('drafts/r', turnDraft());
+
+    await assertSucceeds(updateDoc(draftRef(as('ua')), record(entry(), { confirm: { A: false, B: false } })));
+  });
+});
+
+describe('rules: drafts, creation', () => {
+  it('refuses creating a draft that already has history', async () => {
+    await assertFails(setDoc(draftRef(as('u1')), { ...turnDraft(), phase: 'lobby', history: [entry()] }));
+  });
+
+  it('refuses creating a draft that is already drafting', async () => {
+    await assertFails(setDoc(draftRef(as('u1')), turnDraft()));
+  });
+
+  it('refuses creating a draft with an oversized preset', async () => {
+    await assertFails(setDoc(draftRef(as('u1')), { ...turnDraft(), phase: 'lobby', preset: 'x'.repeat(100_000) }));
+  });
+});
+
+describe('rules: presets, image links', () => {
+  const stored = (image: string) => ({ preset: JSON.stringify({ pools: { a: { items: [{ id: 'x', name: 'X', image }] } } }), ownerUid: 'owner', createdAt: 1, updatedAt: 1 });
+  const ref = (db: Db) => doc(db, 'presets/p2');
+
+  it('accepts an https image link', async () => {
+    await assertSucceeds(setDoc(ref(as('owner')), stored('https://example.com/a.png')));
+  });
+
+  it.each(['http://example.com/a.png', 'javascript:alert(1)', 'data:image/png;base64,AA', '', '//example.com/a.png'])('refuses the image link %j', async (image) => {
+    await assertFails(setDoc(ref(as('owner')), stored(image)));
+  });
+
+  it('refuses an update that introduces a non-https image link', async () => {
+    await seed('presets/p2', stored('https://example.com/a.png'));
+
+    await assertFails(updateDoc(ref(as('owner')), { preset: stored('http://example.com/a.png').preset, updatedAt: 2 }));
   });
 });

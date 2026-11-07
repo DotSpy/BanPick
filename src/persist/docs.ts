@@ -1,7 +1,8 @@
 import type { DraftState } from '../draft';
 import { verifyState } from '../draft';
-import type { Preset } from '../model';
+import type { Entry, Preset, Team } from '../model';
 import { validatePreset, type ValidationError } from '../schema';
+import { turnsOf } from '../turns';
 
 /** Document shapes and their conversions. Pure: no Firestore import, so the rules here are unit-testable. */
 
@@ -18,6 +19,15 @@ export interface DraftDoc {
   phase: DraftState['phase'];
   deadline: number | null;
   turnIndex: number;
+  /** The preset as JSON; set at creation and never changed, so rules can pin it. */
+  preset: string;
+  /** Acting team of every turn, derived from the preset; lets rules check who may write each history entry. */
+  turnTeams: Team[];
+  /** Recorded picks and bans; rules allow it to grow by one entry per write and never to change. */
+  history: Entry[];
+  /** Pending ready confirmations; each captain may only set their own flag. */
+  confirm: Record<Team, boolean> | null;
+  /** Everything else in the draft state, as JSON. Rules cannot read inside it. */
   state: string;
   updatedAt: number;
 }
@@ -45,34 +55,42 @@ export function presetFromDoc(doc: PresetDoc): Loaded<Preset> {
 
 export const canEditPreset = (doc: Pick<PresetDoc, 'ownerUid'>, uid: string | null) => uid !== null && doc.ownerUid === uid;
 
-// Top-level fields exist only so security rules can inspect seats, phase and deadline.
-export function draftToDoc(s: DraftState, now: number): DraftDoc {
+// Top-level fields exist only so security rules can inspect seats, position, history and confirmations.
+// presetJson keeps the stored preset byte-for-byte on later writes; rules require it to stay unchanged.
+export function draftToDoc(s: DraftState, now: number, presetJson = JSON.stringify(s.preset)): DraftDoc {
+  const { preset, history, confirm, ...rest } = s;
   return {
     ownerA: s.teams.A.owner,
     ownerB: s.teams.B.owner,
     phase: s.phase,
     deadline: s.deadline,
     turnIndex: s.turnIndex,
-    state: JSON.stringify(s),
+    preset: presetJson,
+    turnTeams: turnsOf(preset).map((t) => t.team),
+    history: JSON.parse(JSON.stringify(history)),
+    confirm: confirm ?? null,
+    state: JSON.stringify(rest),
     updatedAt: now,
   };
 }
 
 /** The top-level fields are what the security rules see; they must agree with the state the engine acts on. */
 function mismatch(doc: DraftDoc, s: DraftState): string | null {
-  const same = doc.ownerA === s.teams.A.owner && doc.ownerB === s.teams.B.owner && doc.phase === s.phase && doc.turnIndex === s.turnIndex && doc.deadline === s.deadline;
+  const same = doc.turnTeams.join() === turnsOf(s.preset).map((t) => t.team).join() && doc.ownerA === s.teams.A.owner && doc.ownerB === s.teams.B.owner && doc.phase === s.phase && doc.turnIndex === s.turnIndex && doc.deadline === s.deadline;
   return same ? null : 'Stored seats or position do not match the draft state';
 }
 
 /** A stored draft is only accepted if its preset is valid and its history is a legal outcome of the rules. */
 export function draftFromDoc(doc: DraftDoc): Loaded<DraftState> {
   let state: DraftState;
+  let presetData: unknown;
   try {
-    state = JSON.parse(doc.state);
+    presetData = JSON.parse(doc.preset);
+    state = { ...JSON.parse(doc.state), history: doc.history, ...(doc.confirm ? { confirm: doc.confirm } : {}) };
   } catch {
     return { ok: false, error: 'Stored draft is not valid JSON' };
   }
-  const preset = validatePreset(state.preset);
+  const preset = validatePreset(presetData);
   if (!preset.ok) return { ok: false, error: describeErrors(preset.errors) };
   state.preset = preset.preset;
   const problem = verifyState(state) ?? mismatch(doc, state);

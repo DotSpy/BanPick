@@ -310,13 +310,12 @@ describe('room', () => {
   it('flags a stored draft whose history is illegal', async () => {
     const s = setup();
     const { a } = await startDraft(s);
-    const bad: DraftState = JSON.parse(s.docs.get('r')!.state);
-    bad.history.push({ index: 0, team: 'B', action: 'ban', target: 'maps', itemId: 'map-1', auto: false });
-    s.docs.set('r', { ...s.docs.get('r')!, state: JSON.stringify(bad) });
+    const doc = s.docs.get('r')!;
+    s.docs.set('r', { ...doc, history: [...doc.history, { index: 0, team: 'B', action: 'ban', target: 'maps', itemId: 'map-1', auto: false }] });
 
     await a.act('map-2');
 
     expect(a.notice).toBeTruthy();
-    expect(JSON.parse(s.docs.get('r')!.state).history).toHaveLength(1);
+    expect(s.docs.get('r')!.history).toHaveLength(1);
   });
 });

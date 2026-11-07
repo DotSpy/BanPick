@@ -153,7 +153,7 @@ export class Room {
             }
             const now = this.d.now();
             refusal = change(loaded.value, now);
-            return refusal ? null : draftToDoc(loaded.value, now);
+            return refusal ? null : draftToDoc(loaded.value, now, current.preset);
           }),
         WRITE_ATTEMPTS,
         this.wait,
