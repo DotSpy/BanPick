@@ -449,6 +449,14 @@ describe('builder layout and tools', () => {
     expect([mountWith().root.querySelectorAll('.order .lane').length, empty.querySelector('.order') === null, empty.querySelector('.builder-side .hint')!.textContent]).toEqual([2, true, 'Add steps to see the order.']);
   });
 
+  it('shows the pool each chip draws from', () => {
+    const { root } = mountWith();
+
+    const pool = (root.querySelector('.order .chip .chip-pool') as HTMLElement).textContent;
+
+    expect(pool).toBe(newPreset().steps[0].pool);
+  });
+
   it('highlights the step row when its chip is clicked', () => {
     const { root } = mountWith();
 

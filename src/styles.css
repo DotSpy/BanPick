@@ -453,9 +453,10 @@ ol.steps > li.hl { outline: 2px solid var(--primary); }
 .order { overflow-x: auto; padding-bottom: var(--s-2); }
 .lane { display: flex; align-items: center; gap: var(--s-1); margin-bottom: var(--s-1); width: max-content; }
 .lane-label { flex: none; width: 4.5rem; color: var(--muted); font-size: var(--fs-sm); font-weight: 600; }
-.chip-gap { flex: none; width: 3.25rem; }
-#app .chip { flex: none; flex-direction: column; gap: 0; width: 3.25rem; min-height: 0; margin: 0; padding: var(--s-1); border-radius: var(--radius-sm); background: var(--surface-2); color: var(--text); font-size: 0.6875rem; line-height: 1.2; }
+.chip-gap { flex: none; width: 4.25rem; }
+#app .chip { flex: none; flex-direction: column; gap: 0; width: 4.25rem; min-height: 0; margin: 0; padding: var(--s-1); border-radius: var(--radius-sm); background: var(--surface-2); color: var(--text); font-size: 0.6875rem; line-height: 1.2; }
 #app .chip b { font-size: var(--fs-sm); }
+#app .chip .chip-pool { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.625rem; color: var(--muted); }
 #app .chip i { font-style: normal; font-weight: 700; letter-spacing: 0.04em; }
 #app .chip.ban { border: 1px dashed var(--danger); background: var(--danger-bg); }
 #app .chip.ban i { color: var(--danger); }

@@ -19,7 +19,8 @@ export function orderLane(preset: Preset, onSelect: (step: number) => void): HTM
           ? h('span', { className: 'chip-gap' })
           : h('button', { type: 'button', className: `chip ${t.action}`, title: `${i + 1}. Team ${t.team} ${t.action} ${t.target}`, ariaLabel: `Turn ${i + 1}: Team ${t.team} ${t.action} ${t.target}, step ${t.step + 1}`, onclick: () => onSelect(t.step) },
               h('b', { textContent: String(i + 1) }),
-              h('i', { textContent: t.action.toUpperCase() }))),
+              h('i', { textContent: t.action.toUpperCase() }),
+              h('small', { className: 'chip-pool', textContent: t.target }))),
     );
   return h('div', { className: 'order', role: 'group', ariaLabel: 'Pick and ban order' }, ...TEAMS.map(lane));
 }
