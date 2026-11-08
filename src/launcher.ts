@@ -14,15 +14,22 @@ export interface LauncherDeps {
   base: string;
   newId: () => string;
   onEditCopy: (p: Preset) => void;
+  /** The builder, shown in its own tab; copying a preset into it switches to that tab. */
+  builder: HTMLElement;
 }
 
 /** Lets a user start a room from a built-in preset, or load a copy of it into the builder. */
 export function mountLauncher(root: HTMLElement, d: LauncherDeps) {
-  const pick = h('select', { ariaLabel: 'Built-in preset' }, ...d.groups.map((g) => h('optgroup', { label: g.label }, ...g.presets.map((p) => h('option', { value: p.id, textContent: p.preset.name }))))) as HTMLSelectElement;
+  const pick = h('select', { ariaLabel: 'Built-in preset', size: d.groups.reduce((n, g) => n + g.presets.length + 1, 0) }, ...d.groups.map((g) => h('optgroup', { label: g.label }, ...g.presets.map((p) => h('option', { value: p.id, textContent: p.preset.name }))))) as HTMLSelectElement;
+  pick.selectedIndex = 0;
   const result = h('div');
   const chosen = () => d.groups.flatMap((g) => g.presets).find((p) => p.id === pick.value)!;
-  const load = () => d.onEditCopy(structuredClone(chosen().preset));
-  pick.addEventListener('change', load);
+  let showBuilder = () => {};
+  const edit = (p: Preset) => {
+    d.onEditCopy(p);
+    showBuilder();
+  };
+  const load = () => edit(structuredClone(chosen().preset));
   const presets = h(
     'div', { role: 'tabpanel' },
     h('label', {}, 'Preset ', pick),
@@ -30,12 +37,15 @@ export function mountLauncher(root: HTMLElement, d: LauncherDeps) {
     btn('Edit copy', load, { className: 'secondary' }),
     result,
   );
-  const ai = h('div', { role: 'tabpanel' }, aiPanel(d.onEditCopy));
-  root.replaceChildren(h('h2', { textContent: 'Start a draft' }), tabs([['Built-in presets', presets], ['Build with AI', ai]]));
+  const ai = h('div', { role: 'tabpanel' }, aiPanel(edit));
+  d.builder.setAttribute('role', 'tabpanel');
+  const t = tabs([['Built-in presets', presets], ['Preset builder', d.builder], ['Build with AI', ai]]);
+  showBuilder = () => t.select(1);
+  root.replaceChildren(h('h2', { textContent: 'Start a draft' }), t.el);
 }
 
 /** Tab buttons that show one panel at a time; the first tab is selected. */
-function tabs(items: [string, HTMLElement][]): HTMLElement {
+function tabs(items: [string, HTMLElement][]): { el: HTMLElement; select: (at: number) => void } {
   const buttons = items.map(([label]) => h('button', { type: 'button', role: 'tab', className: 'tab', textContent: label }));
   const select = (at: number) =>
     items.forEach(([, panel], i) => {
@@ -44,5 +54,6 @@ function tabs(items: [string, HTMLElement][]): HTMLElement {
     });
   buttons.forEach((b, i) => b.addEventListener('click', () => select(i)));
   select(0);
-  return h('div', { className: 'tabs' }, h('div', { role: 'tablist', className: 'tablist' }, ...buttons), ...items.map(([, panel]) => panel));
+  const el = h('div', { className: 'tabs' }, h('div', { role: 'tablist', className: 'tablist' }, ...buttons), ...items.map(([, panel]) => panel));
+  return { el, select };
 }

@@ -48,7 +48,7 @@ describe('launcher', () => {
   ];
   const mount = (onEditCopy = (_p: unknown) => {}) => {
     const root = document.createElement('div');
-    mountLauncher(root, { groups, base: 'http://h/', newId: () => 'room1', onEditCopy });
+    mountLauncher(root, { groups, base: 'http://h/', newId: () => 'room1', onEditCopy, builder: document.createElement('div') });
     return root;
   };
 
@@ -66,10 +66,10 @@ describe('launcher', () => {
     const root = mount();
     const tab = [...root.querySelectorAll('[role=tab]')].find((t) => t.textContent === 'Build with AI') as HTMLElement;
 
-    const before = (root.querySelectorAll('[role=tabpanel]')[1] as HTMLElement).hidden;
+    const before = (root.querySelectorAll('[role=tabpanel]')[2] as HTMLElement).hidden;
     tab.click();
 
-    expect([before, (root.querySelectorAll('[role=tabpanel]')[1] as HTMLElement).hidden, tab.getAttribute('aria-selected')]).toEqual([true, false, 'true']);
+    expect([before, (root.querySelectorAll('[role=tabpanel]')[2] as HTMLElement).hidden, tab.getAttribute('aria-selected')]).toEqual([true, false, 'true']);
   });
 
   it('puts each preset under its labelled group', () => {
@@ -115,7 +115,28 @@ describe('launcher', () => {
     expect(edited[0]).not.toBe(presets[0].preset);
   });
 
-  it('loads the selected preset into the builder when the selection changes', () => {
+  it('lists the preset builder as its own tab between the presets and Build with AI', () => {
+    const root = mount();
+
+    expect([...root.querySelectorAll('[role=tab]')].map((t) => t.textContent)).toEqual(['Built-in presets', 'Preset builder', 'Build with AI']);
+  });
+
+  it('shows the whole preset list expanded', () => {
+    const root = mount();
+
+    expect((root.querySelector('select') as HTMLSelectElement).size).toBe(4);
+  });
+
+  it('switches to the builder tab when a copy is sent to it', () => {
+    const root = mount();
+
+    click(root, 'Edit copy');
+
+    const tab = [...root.querySelectorAll('[role=tab]')].find((t) => t.textContent === 'Preset builder')!;
+    expect([tab.getAttribute('aria-selected'), (root.querySelectorAll('[role=tabpanel]')[1] as HTMLElement).hidden]).toEqual(['true', false]);
+  });
+
+  it('does not load a preset into the builder just because the selection changes', () => {
     const edited: unknown[] = [];
     const root = mount((p) => edited.push(p));
     const select = root.querySelector('select') as HTMLSelectElement;
@@ -123,6 +144,6 @@ describe('launcher', () => {
 
     select.dispatchEvent(new Event('change'));
 
-    expect(edited).toEqual([presets[1].preset]);
+    expect(edited).toEqual([]);
   });
 });

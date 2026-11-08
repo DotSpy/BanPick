@@ -44,7 +44,7 @@ async function openBuilder(code: string) {
   const initial = (await presetFromHash(code)) ?? newPreset();
   const launcherEl = h('div');
   const builderEl = h('div');
-  root.replaceChildren(launcherEl, builderEl);
+  root.replaceChildren(launcherEl);
   const firestore = db;
   const onSave = firestore
     ? async (p: Preset): Promise<SaveResult> => {
@@ -54,7 +54,7 @@ async function openBuilder(code: string) {
       }
     : undefined;
   const builder = mountBuilder(builderEl, initial, onSave);
-  mountLauncher(launcherEl, { groups: presetGroups, base: base(), newId: shortId, onEditCopy: builder.set });
+  mountLauncher(launcherEl, { groups: presetGroups, base: base(), newId: shortId, onEditCopy: builder.set, builder: builderEl });
 }
 
 const base = () => location.origin + location.pathname;
