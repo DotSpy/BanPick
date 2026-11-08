@@ -39,13 +39,15 @@ export function aiPanel(onOpen: (p: Preset) => void): HTMLElement {
     href: `data:application/json;charset=utf-8,${encodeURIComponent(JSON.stringify(fullExample(), null, 2))}`,
   });
 
-  const box = h('textarea', { className: 'json', ariaLabel: 'Paste preset JSON to validate', placeholder: STUB, spellcheck: false }) as HTMLTextAreaElement;
+  const box = h('textarea', { className: 'json', ariaLabel: 'Paste preset JSON to validate', id: 'ai-json', placeholder: STUB, spellcheck: false }) as HTMLTextAreaElement;
   const result = h('div', { className: 'ai-result', role: 'status' });
+  const stepStatus = h('p', { className: 'ok step-status' });
   const validate = btn('Validate & preview', () => {
     const r = parsePresetJson(box.value);
+    stepStatus.textContent = r.ok ? `\u2713 Valid \u2014 2 teams, ${r.preset.steps.length} steps` : '';
     if (r.ok) {
       result.replaceChildren(
-        h('p', { className: 'ok', textContent: `\u2713 Valid: ${r.preset.name} \u00b7 ${r.preset.steps.length} steps \u00b7 ${summary(r.preset)} \u00b7 ${timerSummary(r.preset)}` }),
+        h('p', { className: 'ok', textContent: `\u2713 Valid: ${r.preset.name} \u00b7 2 teams \u00b7 ${Object.keys(r.preset.pools).length} pools \u00b7 ${r.preset.steps.length} steps \u00b7 ${summary(r.preset)} \u00b7 ${timerSummary(r.preset)}` }),
         btn('Open in builder', () => onOpen(r.preset)),
       );
     } else {
@@ -74,18 +76,20 @@ export function aiPanel(onOpen: (p: Preset) => void): HTMLElement {
     e.preventDefault();
     load(e.dataTransfer?.files[0]);
   });
-  const upload = btn('Upload .json', () => fileInput.click(), { className: 'secondary' });
+  const upload = btn('Upload .json', () => fileInput.click(), { className: 'secondary small' });
+  const LINKS: [string, string][] = [['ChatGPT', 'https://chatgpt.com/'], ['Claude', 'https://claude.ai/'], ['Gemini', 'https://gemini.google.com/']];
+  const chats = h('p', { className: 'chat-links' }, ...LINKS.map(([name, href]) => h('a', { className: 'text-link', href, target: '_blank', rel: 'noopener noreferrer', textContent: name })));
 
   return h(
     'div', { className: 'ai-panel' },
     h('p', { className: 'hint ai-lead', textContent: 'Give your documents and rules to an AI and have it write a custom preset JSON for you.' }),
     h('ol', { className: 'ai-steps' },
       step(1, 'Copy brief', h('p', { textContent: 'The brief explains the preset format to the AI.' }), h('div', { className: 'ai-actions' }, copy, download), copyStatus, brief),
-      step(2, 'Paste into any AI chat', h('p', { textContent: 'Add your rules and documents, then ask for one JSON object.' })),
-      step(3, 'Paste JSON here', h('p', { textContent: 'Type, paste, drop or upload the JSON it returns.' }), h('div', { className: 'ai-actions' }, upload, fileInput))),
-    h('label', {}, 'Preset JSON', box),
-    h('div', { className: 'ai-actions' }, validate),
+      step(2, 'Paste into any AI chat', h('p', { textContent: 'Add your rules and documents, then ask for one JSON object. Tip: attach your rulebook PDF directly.' }), chats),
+      step(3, 'Paste JSON here', h('p', { textContent: 'Paste the JSON it returns into the field below, then validate. Nothing is uploaded.' }), stepStatus)),
+    h('div', { className: 'field-head' }, h('label', { htmlFor: 'ai-json', textContent: 'Preset JSON' }), upload, fileInput),
+    box,
+    h('div', { className: 'ai-actions' }, validate, h('span', { className: 'trust', textContent: 'JSON is validated in your browser; nothing is uploaded.' })),
     result,
-    h('p', { className: 'hint', textContent: 'JSON is validated in your browser; nothing is uploaded.' }),
   );
 }

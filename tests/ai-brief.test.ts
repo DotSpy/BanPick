@@ -92,11 +92,24 @@ describe('Build with AI panel', () => {
     paste(el, JSON.stringify(minimalExample));
     [...el.querySelectorAll('button')].find((b) => b.textContent === 'Open in builder')!.click();
 
-    expect([el.querySelector('.ok')!.textContent, opened.map((p) => p.name)]).toEqual([expect.stringContaining('Valid: Minimal draft'), ['Minimal draft']]);
+    expect([el.querySelector('.ai-result .ok')!.textContent, opened.map((p) => p.name)]).toEqual([expect.stringContaining('Valid: Minimal draft'), ['Minimal draft']]);
   });
 
   it('shows the three steps in order', () => {
     expect([...mount().querySelectorAll('.ai-step strong')].map((s) => s.textContent)).toEqual(['Copy brief', 'Paste into any AI chat', 'Paste JSON here']);
+  });
+
+  it('links to three AI chats that open in a new tab', () => {
+    const links = [...mount().querySelectorAll('.chat-links a')] as HTMLAnchorElement[];
+
+    expect(links.map((a) => [a.textContent, a.target])).toEqual([['ChatGPT', '_blank'], ['Claude', '_blank'], ['Gemini', '_blank']]);
+  });
+
+  it('puts Upload .json next to the field label and shows the valid state in step 3', () => {
+    const el = mount();
+    paste(el, JSON.stringify(minimalExample));
+
+    expect([el.querySelector('.field-head')!.textContent, el.querySelector('.step-status')!.textContent]).toEqual(['Preset JSONUpload .json', expect.stringContaining('Valid')]);
   });
 
   it('disables Validate until the field has text', () => {
