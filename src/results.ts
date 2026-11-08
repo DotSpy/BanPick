@@ -5,6 +5,8 @@ import { choiceOf, visibleHistory } from './rules';
 export interface Choice {
   id: string;
   name: string;
+  /** Name of the team that picked it; set on shared results. */
+  by?: string;
 }
 export interface Group {
   target: string;
@@ -39,7 +41,7 @@ export function draftResults(state: DraftState, viewer: Team | null = null): Dra
   const sharedTargets = new Set([...a, ...b].filter((t) => !(a.has(t) && b.has(t))));
   const shared = [...sharedTargets].map((target) => ({
     target,
-    picks: entries.filter((e) => e.action === 'pick' && e.target === target).map((e) => choiceFor(state, e)),
+    picks: entries.filter((e) => e.action === 'pick' && e.target === target).map((e) => ({ ...choiceFor(state, e), by: state.teams[e.team].name })),
   }));
   const result = (team: Team): TeamResult => {
     const mine = entries.filter((e) => e.team === team);

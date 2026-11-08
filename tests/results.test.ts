@@ -20,7 +20,7 @@ describe('draftResults', () => {
   it('shows a target picked by one team only once, as shared', () => {
     const r = draftResults(finished());
 
-    expect(r.shared).toEqual([{ target: 'maps', picks: [{ id: 'map-2', name: 'map-2' }] }]);
+    expect(r.shared).toEqual([{ target: 'maps', picks: [{ id: 'map-2', name: 'map-2', by: 'Team B' }] }]);
   });
 
   it('keeps shared picks out of the team columns', () => {

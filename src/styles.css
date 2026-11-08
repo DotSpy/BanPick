@@ -636,3 +636,10 @@ ol.steps > li.settle { animation: settle 0.3s ease-out; }
 .result-row ul { flex-direction: column; }
 .result-row.bans { font-size: 0.85em; opacity: 0.7; }
 .result-row.bans .icon-img, .result-row.bans .icon-fallback { width: 24px; height: 24px; }
+.result-map { margin-top: var(--s-3); padding: var(--s-3); border: 1px solid var(--line); border-radius: var(--radius, 8px); background: var(--panel, transparent); }
+.result-map h3 { margin: 0 0 var(--s-2); font-size: var(--fs-sm); color: var(--muted); font-weight: 600; text-transform: uppercase; }
+.result-map-pick { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-1) 0; }
+.result-map-pick > div { display: flex; flex-direction: column; min-width: 0; }
+.result-map-pick strong { font-size: 1.1rem; }
+.result-map-pick .by { color: var(--muted); font-size: var(--fs-sm); }
+.result-map-pick .icon-img, .result-map-pick .icon-fallback { width: 72px; height: 72px; }

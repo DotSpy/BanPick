@@ -195,10 +195,10 @@ describe('random picks', () => {
     return s;
   };
 
-  it('hides the drawn item while the draft is running', () => {
+  it('names the drawn item as soon as it is confirmed', () => {
     const s = draft(false);
 
-    expect(chips(timeline(s.preset, s, 'B'))[0].querySelector('.tl-body')!.textContent).toBe('Random');
+    expect(chips(timeline(s.preset, s, 'B'))[0].querySelector('.tl-body')!.textContent).toBe('map-1');
   });
 
   it('names the drawn item once the draft is finished', () => {

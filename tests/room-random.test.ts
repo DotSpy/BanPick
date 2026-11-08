@@ -85,7 +85,7 @@ describe('room view: random tile', () => {
     dispose();
   });
 
-  it('resolves the turn on confirm and shows it as random in the history', async () => {
+  it('resolves the turn on confirm and marks it with the dice in the history', async () => {
     const { a } = await setup(true);
     const { root, dispose } = mount(a);
     randomButton(root)!.click();
@@ -94,7 +94,7 @@ describe('room view: random tile', () => {
     root.querySelector<HTMLButtonElement>('.commit')!.click();
     await flush();
 
-    expect(root.querySelector('.history li')!.textContent).toContain('Random pick confirmed');
+    expect(root.querySelector('.history li')!.textContent).toContain('\u{1F3B2}');
     dispose();
   });
 

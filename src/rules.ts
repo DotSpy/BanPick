@@ -107,7 +107,7 @@ export function isRevealed(ctx: Ctx, entry: Entry, current: Turn | null): boolea
   return typeof turn.reveal === 'number' && current.step > turn.reveal;
 }
 
-/** History as seen by `viewer` (null = spectator): hidden blind picks lose their itemId, and random picks until the draft is over. */
+/** History as seen by `viewer` (null = spectator): hidden blind picks lose their itemId. */
 export function visibleHistory(ctx: Ctx, current: Turn | null, viewer: Team | null): Entry[] {
-  return ctx.history.map((e) => ((!e.random || current === null) && (e.team === viewer || isRevealed(ctx, e, current)) ? e : { ...e, itemId: '' }));
+  return ctx.history.map((e) => ((e.team === viewer || isRevealed(ctx, e, current)) ? e : { ...e, itemId: '' }));
 }

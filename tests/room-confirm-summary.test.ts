@@ -45,7 +45,7 @@ describe('confirmation status', () => {
 });
 
 describe('finished draft', () => {
-  it('summarises what each team banned and what is shared', async () => {
+  it('summarises what each team banned', async () => {
     const { a, b, view } = await seated(makePreset([step('A', 'ban', 'maps'), step('B', 'pick', 'maps')]));
     await a.act('map-1');
     await b.act('map-2');
@@ -53,6 +53,26 @@ describe('finished draft', () => {
 
     const rows = [...view(a).querySelectorAll('.summary section')].map((s) => [...s.querySelectorAll('li')].map((li) => li.textContent));
 
-    expect([rows, view(a).querySelector('.result-shared')!.textContent]).toEqual([[['map-1'], []], 'mapsmap-2']);
+    expect(rows).toEqual([['map-1'], []]);
+  });
+
+  it('shows a lone shared map in its own card with who picked it', async () => {
+    const { a, b, view } = await seated(makePreset([step('A', 'ban', 'maps'), step('B', 'pick', 'maps')]));
+    await a.act('map-1');
+    await b.act('map-2');
+    await flush();
+
+    const root = view(a);
+
+    expect([root.querySelector('.result-map h3')!.textContent, root.querySelector('.result-map strong')!.textContent, root.querySelector('.result-map .by')!.textContent, root.querySelector('.turn.finished')!.textContent]).toEqual(['Map', 'map-2', 'picked by Team B', expect.not.stringContaining('map-2')]);
+  });
+
+  it('uses the singular label for a row with one item', async () => {
+    const { a, b, view } = await seated(makePreset([step('A', 'ban', 'maps'), step('B', 'pick', 'maps')]));
+    await a.act('map-1');
+    await b.act('map-2');
+    await flush();
+
+    expect(view(a).querySelector('.result-row h4')!.textContent).toBe('Banned map');
   });
 });
