@@ -33,7 +33,7 @@ describe('item tile text', () => {
   const tileRule = css.split('\n').find((l) => l.startsWith('.items button {')) ?? '';
 
   it('wraps long labels inside the tile', () => {
-    expect(tileRule).toContain('overflow-wrap: anywhere');
+    expect(tileRule).toContain('overflow-wrap: normal; hyphens: manual');
   });
 
   it('lets the tile shrink to its grid cell', () => {

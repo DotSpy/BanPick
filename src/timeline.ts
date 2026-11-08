@@ -30,14 +30,16 @@ export function timeline(preset: Preset, state?: TimelineState, viewer: Team | n
     const status = i === current ? 'current' : i < current ? (entry ? 'done' : 'skipped') : 'upcoming';
     const who = state ? state.teams[t.team].name : `Team ${t.team}`;
     const { item, size } = entry?.itemId ? choiceOf(preset, t.action, entry.itemId) : { item: undefined, size: 'medium' as const };
-    const result = !entry ? t.target : entry.itemId ? item?.name ?? entry.itemId : 'hidden';
+    const result = !entry ? t.target : entry.itemId ? item?.name ?? entry.itemId : entry.random ? 'Random pick confirmed' : 'hidden';
     const label = `${i + 1}. ${who} ${t.action} ${t.target}${entry ? `: ${result}` : status === 'skipped' ? ' (skipped: nothing available)' : ''}${t.timer ? ` · ${t.timer}s` : ''}`;
     // A finished turn shows only its outcome; rules and timers belong to current and upcoming chips.
-    const meta = entry ? [!entry.itemId ? 'blind' : '', entry.random ? 'random' : ''].filter(Boolean).join(' \u00b7 ') : [t.timer ? `${t.timer}s` : '', t.blind ? 'blind' : '', t.random ? 'random allowed' : '', t.restrict ? `restricted by ${preset.tagging.tag}` : ''].filter(Boolean).join(' \u00b7 ');
+    const meta = entry ? (entry.random ? '\u{1F3B2}' : !entry.itemId ? 'blind' : '') : [t.timer ? `${t.timer}s` : '', t.blind ? 'blind' : '', t.restrict ? `restricted by ${preset.tagging.tag}` : ''].filter(Boolean).join(' \u00b7 ');
+    const head = h('span', { className: 'tl-head' }, h('b', { textContent: t.team }), h('i', { textContent: LABEL[t.action] }));
+    head.dataset.step = String(i + 1);
     const chip = h('li', { className: `tl team-${t.team} ${t.action} ${status}`, title: label, ...(status === 'current' ? { ariaCurrent: 'step' } : {}) },
-      h('span', { className: 'tl-head' }, h('b', { textContent: t.team }), h('i', { textContent: LABEL[t.action] })),
-      entry?.itemId ? itemIcon(item, '', size) : '',
-      h('span', { className: 'tl-body', textContent: result }),
+      head,
+      entry?.itemId ? itemIcon(item, '', size) : entry?.random ? h('span', { className: 'dice', ariaHidden: 'true', textContent: '\u{1F3B2}' }) : '',
+      h('span', { className: 'tl-body', textContent: entry?.random && !entry.itemId ? 'Random' : result }),
       meta ? h('span', { className: 'tl-meta', textContent: meta }) : '',
     );
     if (t.pause === undefined) return [chip];

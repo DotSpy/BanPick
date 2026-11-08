@@ -186,3 +186,24 @@ describe('timeline outcome chips', () => {
     expect(chips(timeline(s.preset, s, 'B'))[0].querySelector('.tl-meta')!.textContent).toBe('blind');
   });
 });
+
+describe('random picks', () => {
+  const draft = (finish: boolean) => {
+    const s = started(makePreset([step('A', 'ban', 'maps', { random: true }), step('B', 'pick', 'maps')]));
+    applyPick(s, 'A', 'map-1', 0, false, true);
+    if (finish) applyPick(s, 'B', 'map-2', 0, false);
+    return s;
+  };
+
+  it('hides the drawn item while the draft is running', () => {
+    const s = draft(false);
+
+    expect(chips(timeline(s.preset, s, 'B'))[0].querySelector('.tl-body')!.textContent).toBe('Random');
+  });
+
+  it('names the drawn item once the draft is finished', () => {
+    const s = draft(true);
+
+    expect(chips(timeline(s.preset, s, null))[0].querySelector('.tl-body')!.textContent).toBe('map-1');
+  });
+});

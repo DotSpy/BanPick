@@ -1,5 +1,5 @@
 import {
-  applyPick, applyRandom, autoChoice, confirmNext, createState, currentTurn, resumeFromPause, setReady, setSelection,
+  applyPick, autoChoice, confirmNext, createState, currentTurn, resumeFromPause, selectRandom, setReady, setSelection,
   type DraftState,
 } from '../draft';
 import type { Preset, Team } from '../model';
@@ -69,10 +69,10 @@ export class Room {
     return this.mutateAndEmit((s) => decideClaim(s, this.d.uid, team, name).refusal);
   }
   act(itemId: string) {
-    return this.commit((s, team, now) => applyPick(s, team, itemId, now, false));
+    return this.commit((s, team, now) => applyPick(s, team, itemId, now, false, s.selection?.itemId === itemId && !!s.selection.random));
   }
   random() {
-    return this.commit(applyRandom);
+    return this.seated((s, team) => selectRandom(s, team));
   }
   private commit(apply: (s: DraftState, team: Team, now: number) => string | null) {
     return this.seated((s, team, now) => {
@@ -115,7 +115,7 @@ export class Room {
         if (!turn || !st.deadline || st.confirm || now < st.deadline) return 'not due';
         if (st.pausing) return resumeFromPause(st, now);
         const id = autoChoice(st);
-        return id ? applyPick(st, turn.team, id, now, true) : 'nothing to pick';
+        return id ? applyPick(st, turn.team, id, now, true, st.selection?.itemId === id && !!st.selection.random) : 'nothing to pick';
       });
     } finally {
       this.ticking = false;

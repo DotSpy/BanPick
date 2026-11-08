@@ -1,5 +1,5 @@
-﻿import { describe, expect, it } from 'vitest';
-import { applyPick, applyRandom, currentTurn, verifyState } from '../src/draft';
+import { describe, expect, it } from 'vitest';
+import { applyPick, currentTurn, selectRandom, setSelection, verifyState, type DraftState } from '../src/draft';
 import { updateStep } from '../src/builder/edit';
 import { validatePreset } from '../src/schema';
 import { visibleHistory } from '../src/rules';
@@ -7,11 +7,34 @@ import { makePreset, sideTagging, started, step } from './fixtures';
 
 const randomDraft = (extra = {}) => started(makePreset([step('A', 'pick', 'maps', { random: true, ...extra }), step('B', 'ban', 'maps', { random: true }), step('B', 'pick', 'maps')]));
 
+/** Same two steps the room takes: draw a pending random item, then confirm it. */
+const drawAndConfirm = (s: DraftState, team: 'A' | 'B', now: number) => {
+  const err = selectRandom(s, team);
+  return err ?? applyPick(s, team, s.selection!.itemId, now, false, !!s.selection!.random);
+};
+
 describe('random action', () => {
+  it('only selects an item and leaves the turn open until confirmed', () => {
+    const s = randomDraft();
+
+    const err = selectRandom(s, 'A');
+
+    expect([err, s.history.length, s.selection?.random]).toEqual([null, 0, true]);
+  });
+
+  it('replaces the random selection when the captain clicks a tile instead', () => {
+    const s = randomDraft();
+    selectRandom(s, 'A');
+
+    setSelection(s, 'A', 'map-1');
+
+    expect(s.selection).toEqual({ team: 'A', itemId: 'map-1' });
+  });
+
   it('resolves a pick turn with an available item', () => {
     const s = randomDraft();
 
-    const err = applyRandom(s, 'A', 0);
+    const err = drawAndConfirm(s, 'A', 0);
 
     expect([err, s.history[0].random, ['map-1', 'map-2', 'map-3'].includes(s.history[0].itemId)]).toEqual([null, true, true]);
   });
@@ -20,7 +43,7 @@ describe('random action', () => {
     const s = randomDraft();
     applyPick(s, 'A', 'map-1', 0, false);
 
-    const err = applyRandom(s, 'B', 0);
+    const err = drawAndConfirm(s, 'B', 0);
 
     expect([err, s.history[1].action, s.history[1].itemId]).toEqual([null, 'ban', expect.not.stringMatching(/^map-1$/)]);
   });
@@ -28,7 +51,7 @@ describe('random action', () => {
   it('never draws an item that is already used', () => {
     const s = started(makePreset([step('A', 'pick', 'maps', { random: true, count: 3 })]));
 
-    for (let n = 0; n < 3; n++) applyRandom(s, 'A', 0);
+    for (let n = 0; n < 3; n++) drawAndConfirm(s, 'A', 0);
 
     expect(new Set(s.history.map((e) => e.itemId)).size).toBe(3);
   });
@@ -36,18 +59,18 @@ describe('random action', () => {
   it('is refused when the step does not allow random', () => {
     const s = started(makePreset([step('A', 'pick', 'maps')]));
 
-    expect(applyRandom(s, 'A', 0)).toBe('Random is not enabled for this step');
+    expect(drawAndConfirm(s, 'A', 0)).toBe('Random is not enabled for this step');
   });
 
   it('is refused for the team that is not acting', () => {
     const s = randomDraft();
 
-    expect(applyRandom(s, 'B', 0)).toBe('Not your turn');
+    expect(drawAndConfirm(s, 'B', 0)).toBe('Not your turn');
   });
 
   it('keeps a random blind pick hidden from the opponent', () => {
     const s = randomDraft({ blind: true });
-    applyRandom(s, 'A', 0);
+    drawAndConfirm(s, 'A', 0);
 
     expect(visibleHistory(s, currentTurn(s), 'B')[0]).toMatchObject({ itemId: '', random: true });
   });
@@ -56,7 +79,7 @@ describe('random action', () => {
     const s = started(makePreset([step('A', 'choose', 'side'), step('A', 'pick', 'divisions', { random: true, restrict: 'tag' })], { tagging: sideTagging() }));
     applyPick(s, 'A', 'nato', 0, false);
 
-    applyRandom(s, 'A', 0);
+    drawAndConfirm(s, 'A', 0);
 
     expect(['cav', 'ranger']).toContain(s.history[1].itemId);
   });
@@ -64,7 +87,7 @@ describe('random action', () => {
   it('passes verification', () => {
     const s = randomDraft();
     s.teams.A.owner = s.teams.B.owner = null;
-    applyRandom(s, 'A', 0);
+    drawAndConfirm(s, 'A', 0);
 
     expect(verifyState(s)).toBeNull();
   });

@@ -23,12 +23,14 @@ export interface DraftState {
   /** While set, the current turn is in its timed pause; `deadline` is when it ends. */
   pausing?: boolean;
   /** The item the acting team has clicked but not confirmed; used as the pick if the timer runs out. */
-  selection?: { team: Team; itemId: string } | null;
+  selection?: { team: Team; itemId: string; random?: boolean } | null;
   history: Entry[];
   teams: Record<Team, TeamInfo>;
   spectators: number;
   serverNow: number;
   createdAt: number;
+  /** When the draft left the lobby; absent on drafts stored before this field existed. */
+  startedAt?: number | null;
   finishedAt: number | null;
 }
 
@@ -53,6 +55,7 @@ function goto(state: DraftState, index: number, now: number, afterPick = false) 
   state.phase = 'drafting';
   state.turnIndex = index;
   state.finishedAt = null;
+  state.startedAt = state.startedAt ?? now;
   if (turn.pause === 'ready' || (turn.pause === undefined && afterPick && state.preset.pauses.between)) {
     state.confirm = { A: false, B: false };
     state.deadline = null;
@@ -179,22 +182,22 @@ export function randomAvailable(state: DraftState): string | null {
   return l.length ? l[Math.floor(Math.random() * l.length)] : null;
 }
 
-/** Resolves the current turn with a random available item; only for steps that allow it. */
-export function applyRandom(state: DraftState, team: Team, now: number): string | null {
+/** Draws a random available item as the pending selection; the captain still has to confirm it. */
+export function selectRandom(state: DraftState, team: Team): string | null {
   if (!currentTurn(state)?.random) return 'Random is not enabled for this step';
   const id = randomAvailable(state);
-  return id ? applyPick(state, team, id, now, false, true) : 'Nothing available';
+  return id ? setSelection(state, team, id, true) : 'Nothing available';
 }
 
 /** Stores the acting team's clicked item (or clears it with null). */
-export function setSelection(state: DraftState, team: Team, itemId: string | null): string | null {
+export function setSelection(state: DraftState, team: Team, itemId: string | null, random = false): string | null {
   if (itemId === null) {
     state.selection = null;
     return null;
   }
   const err = checkTurn(state, team, itemId);
   if (err) return err;
-  state.selection = { team, itemId };
+  state.selection = { team, itemId, ...(random ? { random } : {}) };
   return null;
 }
 

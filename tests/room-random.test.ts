@@ -74,14 +74,27 @@ describe('room view: random tile', () => {
     dispose();
   });
 
-  it('resolves the turn and shows it as random in the history', async () => {
+  it('keeps the turn open after clicking Random', async () => {
     const { a } = await setup(true);
     const { root, dispose } = mount(a);
 
     randomButton(root)!.click();
     await flush();
 
-    expect(root.querySelector('.history li')!.textContent).toContain('(random)');
+    expect([a.state?.history.length, root.querySelector('.commit')?.textContent]).toEqual([0, expect.stringMatching(/^Confirm /)]);
+    dispose();
+  });
+
+  it('resolves the turn on confirm and shows it as random in the history', async () => {
+    const { a } = await setup(true);
+    const { root, dispose } = mount(a);
+    randomButton(root)!.click();
+    await flush();
+
+    root.querySelector<HTMLButtonElement>('.commit')!.click();
+    await flush();
+
+    expect(root.querySelector('.history li')!.textContent).toContain('Random pick confirmed');
     dispose();
   });
 
@@ -89,6 +102,7 @@ describe('room view: random tile', () => {
     const { a } = await setup(true);
 
     await a.random();
+    await a.act(a.state!.selection!.itemId);
 
     expect(a.state?.history[0].by).toBe('ua');
   });
