@@ -308,10 +308,10 @@ export function mountBuilder(root: HTMLElement, initial: Preset, onSave?: (p: Pr
   const general = () =>
     h('div', { className: 'general' },
       h('label', { className: 'field' }, 'Preset name', input('Preset name', preset.name, (v) => update(E.rename(preset, v)))),
-      h('label', { className: 'switch', title: 'Host confirms before each step' },
+      h('label', { className: 'switch', title: 'Both captains confirm between each step (after every pick)' },
         h('input', { type: 'checkbox', checked: !!preset.pauses?.between, onchange: (e: Event) => { const c = (e.target as HTMLInputElement).checked; later(() => update(E.setPausesBetween(preset, c))); } }),
         'Pause between steps',
-        h('span', { className: 'help', textContent: '?', title: 'Host confirms before each step' })),
+        h('span', { className: 'help', textContent: '?', title: 'Both captains confirm between each step (after every pick)' })),
       preset.name.trim() ? '' : h('p', { className: 'warn', role: 'note', textContent: 'Enter a preset name.' }));
 
   const rawJson = () =>

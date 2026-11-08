@@ -382,7 +382,7 @@ describe('builder layout and tools', () => {
   it('offers a pause switch with a tooltip', () => {
     const { root } = mountWith();
 
-    expect(root.querySelector('label.switch')!.getAttribute('title')).toBe('Host confirms before each step');
+    expect(root.querySelector('label.switch')!.getAttribute('title')).toBe('Both captains confirm between each step (after every pick)');
   });
 
   it('labels the pool selects and shows the item column headers', () => {

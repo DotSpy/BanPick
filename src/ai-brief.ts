@@ -27,7 +27,7 @@ export const fieldNotes: Record<string, Record<string, string>> = {
     tagging: 'optional grouping of items (for example sides); see Tagging',
     pools: 'object: pool name -> pool; steps refer to pools by name',
     steps: 'ordered list of 1-200 steps; each step expands to `count` turns',
-    pauses: '`{ "between": true }` waits for both captains between turns; default `{ "between": false }`',
+    pauses: '`{ "between": true }` waits for both captains to confirm after each pick, before the next turn; default `{ "between": false }`',
   },
   tagging: {
     assignment: '`none` = no tags; `fixed` = each team always has a given tag value (needs `seats`); `chosen` = a team picks a value in a `choose` step',
