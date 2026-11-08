@@ -120,7 +120,12 @@ body {
 .app-header span { color: var(--header-muted); font-size: var(--fs-sm); }
 
 .app-header { align-items: center; }
-.settings { margin-left: auto; position: relative; }
+.app-header a.support { margin-left: auto; padding: 0 var(--s-2); min-height: 40px; display: inline-flex; align-items: center; border: 1px solid var(--header-muted); border-radius: var(--radius-sm); color: var(--header-text); font-size: var(--fs-sm); font-weight: 600; letter-spacing: 0; white-space: nowrap; }
+.app-header a.support:hover { background: rgb(255 255 255 / 14%); }
+.app-header a.support span { color: inherit; }
+.app-footer { padding: var(--s-3) var(--s-4); color: var(--muted); font-size: var(--fs-sm); text-align: center; }
+.app-footer a { color: var(--primary); }
+.settings { position: relative; }
 .settings-toggle { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 1px solid var(--header-muted); border-radius: var(--radius-sm); color: var(--header-text); cursor: pointer; list-style: none; }
 .settings-toggle::-webkit-details-marker { display: none; }
 .settings-toggle:hover, .settings[open] .settings-toggle { background: rgb(255 255 255 / 14%); }
@@ -391,6 +396,7 @@ button.commit:hover:not(:disabled) { background: var(--commit-hover); border-col
   .row > button.icon:last-of-type { margin-left: auto; }
   button.commit, .items + button, .turn ~ button:not(.icon) { width: 100%; }
   .timer { margin-left: 0; }
+  .app-header a.support .label { display: none; }
 }
 
 @media (prefers-reduced-motion: no-preference) {

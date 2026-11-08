@@ -1,6 +1,12 @@
 # BanPick
 
+[![Support me on Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20me-ff5e5b?logo=ko-fi&logoColor=white)](https://ko-fi.com/dotspy)
+
 A generic pick/ban draft platform. A draft is described entirely by a **preset** (JSON). The WARNO draft is one built-in preset; there is no game-specific engine code.
+
+## Support
+
+BanPick is free and open. If it saves your community some drafting headaches, you can [support me on Ko-fi](https://ko-fi.com/dotspy).
 
 ## Modules
 
