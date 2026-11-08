@@ -1,0 +1,69 @@
+{
+  "_comment": "Steps are 'TEAM ACTION TARGET TIMER_SECONDS' (TEAM A|B, ACTION pick|ban, TARGET map|side|division, timer 0 = no timer). 'A pick side' lets team A choose NATO or Pact; the opponent gets the other side. Division picks come only from the team's own side; a division ban removes a division from the OPPONENT's pool. Map bans/picks are global. 'random': true lets captains resolve any pick or ban step with a random available item (side choices excluded). The order below is a DEFAULT ASSUMPTION - edit freely. 'pool' picks a map pool from maps.json; 'mapIds'/'divisionIds' override it.",
+  "presets": [
+    {
+      "id": "1v1", "name": "1v1 Duel", "random": true, "teamSize": 1, "pool": "1v1",
+      "steps": [
+        "A ban map 30", "B ban map 30", "A ban map 30", "B ban map 30", "A ban map 30", "B ban map 30", "A pick map 30", "A pick side 30",
+        "A ban division 30 ready", "B ban division 30",
+        "A pick division 45", "B pick division 45"
+      ]
+    },
+    {
+      "id": "2v2", "name": "2v2", "random": true, "teamSize": 2, "pool": "2v2",
+      "steps": [
+        "A ban map 30", "B ban map 30", "A ban map 30", "B ban map 30", "A ban map 30", "B ban map 30", "A ban map 30", "B ban map 30", "A pick map 30", "A pick side 30",
+        "A ban division 30 ready", "B ban division 30", "A ban division 30", "B ban division 30",
+        "A pick division 45", "B pick division 45", "A pick division 45", "B pick division 45"
+      ]
+    },
+    {
+      "id": "3v3", "name": "3v3", "random": true, "teamSize": 3, "pool": "3v3",
+      "steps": [
+        "A ban map 30", "B ban map 30", "A ban map 30", "B ban map 30", "A pick map 30", "A pick side 30",
+        "A ban division 30 ready", "B ban division 30", "A ban division 30", "B ban division 30", "A ban division 30", "B ban division 30",
+        "A pick division 45", "B pick division 45", "A pick division 45", "B pick division 45", "A pick division 45", "B pick division 45"
+      ]
+    },
+    {
+      "id": "open-exclusive", "name": "2v2 Open pool - exclusive (one by one)", "random": true, "teamSize": 2, "pool": "2v2", "divisionPick": "exclusive",
+      "steps": [
+        "A ban map 30", "B ban map 30", "A ban map 30", "B ban map 30", "A pick map 30",
+        "A pick division 45 ready", "B pick division 45", "B pick division 45", "A pick division 45"
+      ]
+    },
+    {
+      "id": "open-shared", "name": "2v2 Open pool - shared (blind-style)", "random": true, "teamSize": 2, "pool": "2v2", "divisionPick": "shared",
+      "steps": [
+        "A ban map 30", "B ban map 30", "A ban map 30", "B ban map 30", "A pick map 30",
+        "A pick division 45 ready", "A pick division 45", "B pick division 45", "B pick division 45"
+      ]
+    },
+    {
+      "id": "1v1-bo3", "name": "1v1 Best of 3 (1v1 + 2v2 maps)", "random": true, "teamSize": 1, "pool": "1v1,2v2", "divisionPick": "shared",
+      "rules": [
+        { "kind": "mapBan", "pattern": "1-1-1-1", "first": "A", "timer": 30 },
+        { "kind": "mapPick", "pattern": "1-1-1", "first": "A", "timer": 30 },
+        { "kind": "divBan", "pattern": "1-1", "first": "B", "timer": 30, "pause": "ready" },
+        { "kind": "divPick", "pattern": "1-2-2-1", "first": "A", "timer": 45 }
+      ],
+      "steps": [
+        "A ban map 30", "B ban map 30", "A ban map 30", "B ban map 30", "A pick map 30", "B pick map 30", "A pick map 30",
+        "B ban division 30 ready", "A ban division 30",
+        "A pick division 45", "B pick division 45", "B pick division 45", "A pick division 45", "A pick division 45", "B pick division 45"
+      ]
+    },
+    {
+      "id": "2v2-bo2-3v3maps", "name": "2v2 Two games (2v2 + 3v3 maps)", "random": true, "teamSize": 2, "pool": "2v2,3v3", "divisionPick": "shared",
+      "rules": [
+        { "kind": "mapBan", "pattern": "1-1-1-1", "first": "B", "timer": 30 },
+        { "kind": "mapPick", "pattern": "1-1", "first": "A", "timer": 30 },
+        { "kind": "divPick", "pattern": "4-4", "first": "A", "timer": 45, "pause": "ready" }
+      ],
+      "steps": [
+        "B ban map 30", "A ban map 30", "B ban map 30", "A ban map 30", "A pick map 30", "B pick map 30",
+        "A pick division 45 ready", "A pick division 45", "A pick division 45", "A pick division 45", "B pick division 45", "B pick division 45", "B pick division 45", "B pick division 45"
+      ]
+    }
+  ]
+}

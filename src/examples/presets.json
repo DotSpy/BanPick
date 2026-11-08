@@ -1,0 +1,510 @@
+{
+    "presets":  [
+                    {
+                        "id": "moba-draft",
+                        "preset": {
+                            "version": 1,
+                            "name": "MOBA draft (2 teams, shared pool)",
+                            "steps": [
+                                {
+                                    "team": "A",
+                                    "action": "ban",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30,
+                                    "pause": "ready"
+                                },
+                                {
+                                    "team": "B",
+                                    "action": "ban",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "A",
+                                    "action": "ban",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "B",
+                                    "action": "ban",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "A",
+                                    "action": "pick",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "B",
+                                    "action": "pick",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "A",
+                                    "action": "ban",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "B",
+                                    "action": "ban",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "B",
+                                    "action": "pick",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "A",
+                                    "action": "pick",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "B",
+                                    "action": "pick",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "A",
+                                    "action": "pick",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "A",
+                                    "action": "ban",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "B",
+                                    "action": "ban",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "B",
+                                    "action": "pick",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "A",
+                                    "action": "pick",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "B",
+                                    "action": "pick",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                },
+                                {
+                                    "team": "A",
+                                    "action": "pick",
+                                    "pool": "heroes",
+                                    "count": 1,
+                                    "timer": 30
+                                }
+                            ],
+                            "pools": {
+                                "heroes": {
+                                    "scope": "shared",
+                                    "items": [
+                                        {
+                                            "id": "anti-mage",
+                                            "name": "Anti-Mage"
+                                        },
+                                        {
+                                            "id": "axe",
+                                            "name": "Axe"
+                                        },
+                                        {
+                                            "id": "bane",
+                                            "name": "Bane"
+                                        },
+                                        {
+                                            "id": "bloodseeker",
+                                            "name": "Bloodseeker"
+                                        },
+                                        {
+                                            "id": "crystal-maiden",
+                                            "name": "Crystal Maiden"
+                                        },
+                                        {
+                                            "id": "drow-ranger",
+                                            "name": "Drow Ranger"
+                                        },
+                                        {
+                                            "id": "earthshaker",
+                                            "name": "Earthshaker"
+                                        },
+                                        {
+                                            "id": "juggernaut",
+                                            "name": "Juggernaut"
+                                        },
+                                        {
+                                            "id": "mirana",
+                                            "name": "Mirana"
+                                        },
+                                        {
+                                            "id": "morphling",
+                                            "name": "Morphling"
+                                        },
+                                        {
+                                            "id": "phantom-assassin",
+                                            "name": "Phantom Assassin"
+                                        },
+                                        {
+                                            "id": "pudge",
+                                            "name": "Pudge"
+                                        },
+                                        {
+                                            "id": "sniper",
+                                            "name": "Sniper"
+                                        },
+                                        {
+                                            "id": "sven",
+                                            "name": "Sven"
+                                        },
+                                        {
+                                            "id": "tidehunter",
+                                            "name": "Tidehunter"
+                                        },
+                                        {
+                                            "id": "vengeful-spirit",
+                                            "name": "Vengeful Spirit"
+                                        },
+                                        {
+                                            "id": "viper",
+                                            "name": "Viper"
+                                        },
+                                        {
+                                            "id": "warlock",
+                                            "name": "Warlock"
+                                        },
+                                        {
+                                            "id": "witch-doctor",
+                                            "name": "Witch Doctor"
+                                        },
+                                        {
+                                            "id": "zeus",
+                                            "name": "Zeus"
+                                        }
+                                    ]
+                                }
+                            },
+                            "tagging": {
+                                "assignment": "none"
+                            },
+                            "pauses": {
+                                "between": false
+                            }
+                        }
+                    },
+                    {
+                        "id":  "captains-mode",
+                        "preset":  {
+                                       "version":  1,
+                                       "steps":  [
+                                                     {
+                                                         "action":  "pick",
+                                                         "timer":  30,
+                                                         "pool":  "units",
+                                                         "pause":  "ready",
+                                                         "team":  "A",
+                                                         "count":  1,
+                                                         "restrict":  "tag"
+                                                     },
+                                                     {
+                                                         "action":  "pick",
+                                                         "timer":  30,
+                                                         "pool":  "units",
+                                                         "team":  "B",
+                                                         "count":  1,
+                                                         "restrict":  "tag"
+                                                     },
+                                                     {
+                                                         "action":  "ban",
+                                                         "timer":  30,
+                                                         "pool":  "units",
+                                                         "team":  "A",
+                                                         "count":  1,
+                                                         "restrict":  "tag"
+                                                     },
+                                                     {
+                                                         "action":  "ban",
+                                                         "timer":  30,
+                                                         "pool":  "units",
+                                                         "team":  "B",
+                                                         "count":  1,
+                                                         "restrict":  "tag"
+                                                     },
+                                                     {
+                                                         "action":  "pick",
+                                                         "timer":  30,
+                                                         "pool":  "units",
+                                                         "team":  "A",
+                                                         "count":  1,
+                                                         "restrict":  "tag"
+                                                     },
+                                                     {
+                                                         "action":  "pick",
+                                                         "timer":  30,
+                                                         "pool":  "units",
+                                                         "team":  "B",
+                                                         "count":  1,
+                                                         "restrict":  "tag"
+                                                     }
+                                                 ],
+                                       "name":  "Captains Mode",
+                                       "pools":  {
+                                                     "units":  {
+                                                                   "items":  [
+                                                                                 {
+                                                                                     "tags":  {
+                                                                                                  "side":  "red"
+                                                                                              },
+                                                                                     "name":  "Red 1",
+                                                                                     "id":  "red-1"
+                                                                                 },
+                                                                                 {
+                                                                                     "tags":  {
+                                                                                                  "side":  "red"
+                                                                                              },
+                                                                                     "name":  "Red 2",
+                                                                                     "id":  "red-2"
+                                                                                 },
+                                                                                 {
+                                                                                     "tags":  {
+                                                                                                  "side":  "red"
+                                                                                              },
+                                                                                     "name":  "Red 3",
+                                                                                     "id":  "red-3"
+                                                                                 },
+                                                                                 {
+                                                                                     "tags":  {
+                                                                                                  "side":  "red"
+                                                                                              },
+                                                                                     "name":  "Red 4",
+                                                                                     "id":  "red-4"
+                                                                                 },
+                                                                                 {
+                                                                                     "tags":  {
+                                                                                                  "side":  "blue"
+                                                                                              },
+                                                                                     "name":  "Blue 1",
+                                                                                     "id":  "blue-1"
+                                                                                 },
+                                                                                 {
+                                                                                     "tags":  {
+                                                                                                  "side":  "blue"
+                                                                                              },
+                                                                                     "name":  "Blue 2",
+                                                                                     "id":  "blue-2"
+                                                                                 },
+                                                                                 {
+                                                                                     "tags":  {
+                                                                                                  "side":  "blue"
+                                                                                              },
+                                                                                     "name":  "Blue 3",
+                                                                                     "id":  "blue-3"
+                                                                                 },
+                                                                                 {
+                                                                                     "tags":  {
+                                                                                                  "side":  "blue"
+                                                                                              },
+                                                                                     "name":  "Blue 4",
+                                                                                     "id":  "blue-4"
+                                                                                 }
+                                                                             ],
+                                                                   "scope":  "shared"
+                                                               }
+                                                 },
+                                       "pauses":  {
+                                                      "between":  false
+                                                  },
+                                       "tagging":  {
+                                                       "sameTag":  "forbid",
+                                                       "values":  [
+                                                                      "red",
+                                                                      "blue"
+                                                                  ],
+                                                       "seats":  {
+                                                                     "A":  "red",
+                                                                     "B":  "blue"
+                                                                 },
+                                                       "assignment":  "fixed",
+                                                       "tag":  "side"
+                                                   }
+                                   }
+                    },
+                    {
+                        "id":  "fixed-sides-blind",
+                        "preset":  {
+                                       "version":  1,
+                                       "steps":  [
+                                                     {
+                                                         "team":  "A",
+                                                         "count":  2,
+                                                         "action":  "pick",
+                                                         "blind":  true,
+                                                         "reveal":  "end",
+                                                         "restrict":  "tag",
+                                                         "timer":  30,
+                                                         "pool":  "units"
+                                                     },
+                                                     {
+                                                         "team":  "B",
+                                                         "count":  2,
+                                                         "action":  "pick",
+                                                         "blind":  true,
+                                                         "reveal":  "end",
+                                                         "restrict":  "tag",
+                                                         "timer":  30,
+                                                         "pool":  "units"
+                                                     },
+                                                     {
+                                                         "action":  "ban",
+                                                         "timer":  30,
+                                                         "pool":  "units",
+                                                         "pause":  5,
+                                                         "team":  "A",
+                                                         "count":  1,
+                                                         "restrict":  "tag"
+                                                     },
+                                                     {
+                                                         "action":  "ban",
+                                                         "timer":  30,
+                                                         "pool":  "units",
+                                                         "pause":  5,
+                                                         "team":  "B",
+                                                         "count":  1,
+                                                         "restrict":  "tag"
+                                                     }
+                                                 ],
+                                       "name":  "Fixed sides, blind picks",
+                                       "pools":  {
+                                                     "units":  {
+                                                                   "items":  [
+                                                                                 {
+                                                                                     "tags":  {
+                                                                                                  "side":  "nato"
+                                                                                              },
+                                                                                     "name":  "Nato 1",
+                                                                                     "id":  "nato-1"
+                                                                                 },
+                                                                                 {
+                                                                                     "tags":  {
+                                                                                                  "side":  "nato"
+                                                                                              },
+                                                                                     "name":  "Nato 2",
+                                                                                     "id":  "nato-2"
+                                                                                 },
+                                                                                 {
+                                                                                     "tags":  {
+                                                                                                  "side":  "nato"
+                                                                                              },
+                                                                                     "name":  "Nato 3",
+                                                                                     "id":  "nato-3"
+                                                                                 },
+                                                                                 {
+                                                                                     "tags":  {
+                                                                                                  "side":  "nato"
+                                                                                              },
+                                                                                     "name":  "Nato 4",
+                                                                                     "id":  "nato-4"
+                                                                                 },
+                                                                                 {
+                                                                                     "tags":  {
+                                                                                                  "side":  "nato"
+                                                                                              },
+                                                                                     "name":  "Nato 5",
+                                                                                     "id":  "nato-5"
+                                                                                 },
+                                                                                 {
+                                                                                     "tags":  {
+                                                                                                  "side":  "pact"
+                                                                                              },
+                                                                                     "name":  "Pact 1",
+                                                                                     "id":  "pact-1"
+                                                                                 },
+                                                                                 {
+                                                                                     "tags":  {
+                                                                                                  "side":  "pact"
+                                                                                              },
+                                                                                     "name":  "Pact 2",
+                                                                                     "id":  "pact-2"
+                                                                                 },
+                                                                                 {
+                                                                                     "tags":  {
+                                                                                                  "side":  "pact"
+                                                                                              },
+                                                                                     "name":  "Pact 3",
+                                                                                     "id":  "pact-3"
+                                                                                 },
+                                                                                 {
+                                                                                     "tags":  {
+                                                                                                  "side":  "pact"
+                                                                                              },
+                                                                                     "name":  "Pact 4",
+                                                                                     "id":  "pact-4"
+                                                                                 },
+                                                                                 {
+                                                                                     "tags":  {
+                                                                                                  "side":  "pact"
+                                                                                              },
+                                                                                     "name":  "Pact 5",
+                                                                                     "id":  "pact-5"
+                                                                                 }
+                                                                             ],
+                                                                   "scope":  "shared"
+                                                               }
+                                                 },
+                                       "pauses":  {
+                                                      "between":  false
+                                                  },
+                                       "tagging":  {
+                                                       "sameTag":  "forbid",
+                                                       "values":  [
+                                                                      "nato",
+                                                                      "pact"
+                                                                  ],
+                                                       "seats":  {
+                                                                     "A":  "nato",
+                                                                     "B":  "pact"
+                                                                 },
+                                                       "assignment":  "fixed",
+                                                       "tag":  "side"
+                                                   }
+                                   }
+                    }
+                ]
+}
