@@ -185,7 +185,7 @@ describe('launcher, recently used', () => {
   it('shows the presets used before, newest first', () => {
     const root = mount(memory({ 'banpick-recent': JSON.stringify(['two', 'one']) }));
 
-    expect([...root.querySelectorAll('.recent .chip')].map((c) => c.textContent)).toEqual(['Second', 'Test']);
+    expect([...root.querySelectorAll('.recent .recent-chip')].map((c) => c.textContent)).toEqual(['Second', 'Test']);
   });
 
   it('remembers a preset once a room is created from it', () => {
@@ -201,7 +201,7 @@ describe('launcher, recently used', () => {
   it('selects a preset again from its chip', () => {
     const root = mount(memory({ 'banpick-recent': '["two"]' }));
 
-    (root.querySelector('.recent .chip') as HTMLElement).click();
+    (root.querySelector('.recent .recent-chip') as HTMLElement).click();
 
     expect((root.querySelector('input[value=two]') as HTMLInputElement).checked).toBe(true);
   });

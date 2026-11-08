@@ -58,7 +58,7 @@ export function mountLauncher(root: HTMLElement, d: LauncherDeps) {
     recent.hidden = shown.length === 0;
     recent.replaceChildren(
       h('h3', { textContent: 'Recently used' }),
-      ...shown.map((e) => btn(splitName(e.preset.name).title, () => choose(e.id), { className: 'chip', title: e.preset.name })),
+      ...shown.map((e) => btn(splitName(e.preset.name).title, () => choose(e.id), { className: 'recent-chip', title: e.preset.name })),
     );
   };
   const used = () => renderRecent(rememberRecent(selected.id, d.storage));

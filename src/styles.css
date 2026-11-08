@@ -270,8 +270,8 @@ ol, ul { margin: var(--s-2) 0; padding-left: 0; list-style: none; }
 #app .launcher-actions button { margin: 0; }
 .recent { margin-bottom: var(--s-4); }
 .recent h3 { margin: 0 0 var(--s-2); font-size: var(--fs-sm); color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
-#app button.chip { min-height: 36px; padding: var(--s-1) var(--s-3); background: var(--surface-2); color: var(--text); border-color: var(--line); }
-#app button.chip:hover:not(:disabled) { background: var(--info-bg); border-color: var(--primary); color: var(--text); }
+#app button.recent-chip { margin: 0 var(--s-2) 0 0; min-height: 36px; padding: var(--s-1) var(--s-3); background: var(--surface-2); color: var(--text); border-color: var(--line); }
+#app button.recent-chip:hover:not(:disabled) { background: var(--info-bg); border-color: var(--primary); color: var(--text); }
 .preset-preview { padding: var(--s-4); border-radius: var(--radius); background: var(--surface-2); position: sticky; top: var(--s-4); }
 .preset-preview h3 { margin: 0; }
 .preview-totals { font-size: var(--fs-sm); }
