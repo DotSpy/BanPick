@@ -81,3 +81,11 @@ describe('builder layout', () => {
     expect(css).toContain('grid-template-columns: 1fr 1.5fr 2fr 2fr auto auto');
   });
 });
+
+describe('tab row', () => {
+  it('hides scrollbars and arrows in every engine', () => {
+    const css = read('../src/styles.css');
+
+    expect([css.includes('.tablist::-webkit-scrollbar { display: none'), /\.tablist \{[^}]*scrollbar-width: none/.test(css), /\.tablist \{[^}]*overflow-y: hidden/.test(css)]).toEqual([true, true, true]);
+  });
+});
