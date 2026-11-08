@@ -350,39 +350,47 @@ describe('seat choice', () => {
     mountRoom(root, visitor);
     return { root, visitor };
   };
-  const labels = (root: HTMLElement) => [...root.querySelectorAll('.seat-choice button')].map((b) => b.textContent);
+  const takeButtons = (root: HTMLElement) => [...root.querySelectorAll('.seat-card button.take')].map((b) => b.closest('.seat-card')!.querySelector('h3')!.textContent);
   const flush = () => new Promise((r) => setTimeout(r, 0));
   const press = (root: HTMLElement, label: string) => [...root.querySelectorAll('button')].find((b) => b.textContent === label)!.click();
 
-  it('offers both seats and Watch to a browser without a seat', async () => {
+  it('offers a Take seat button on each open seat card', async () => {
     const { root } = await setup();
 
-    expect(labels(root)).toEqual(['Team A', 'Team B', 'Watch']);
+    expect(takeButtons(root)).toEqual(['Team A', 'Team B']);
   });
 
-  it('shows a taken seat as taken and disabled', async () => {
+  it('offers no Take seat button on a taken seat and shows its owner', async () => {
     const { root } = await setup(['A']);
 
-    const a = root.querySelector('.seat-choice button') as HTMLButtonElement;
-
-    expect([a.textContent, a.disabled]).toEqual(['Team A (taken)', true]);
+    expect([takeButtons(root), root.querySelector('.seat-card.team-A .seat-status')!.textContent]).toEqual([['Team B'], 'Team A']);
   });
 
   it('claims the chosen seat', async () => {
     const { root, visitor } = await setup();
 
-    press(root, 'Team B');
+    root.querySelector<HTMLButtonElement>('.seat-card.team-B button.take')!.click();
     await flush();
 
     expect(visitor.role).toBe('B');
   });
 
-  it('hides the choice after Watch and keeps the viewer a spectator', async () => {
+  it('joins with the typed name', async () => {
+    const { root, visitor } = await setup();
+    root.querySelector<HTMLInputElement>('form.name input')!.value = 'Ada';
+
+    root.querySelector<HTMLButtonElement>('.seat-card.team-A button.take')!.click();
+    await flush();
+
+    expect(visitor.state!.teams.A.name).toBe('Ada');
+  });
+
+  it('hides the seat buttons and the name field after Watch and keeps the viewer a spectator', async () => {
     const { root, visitor } = await setup();
 
     press(root, 'Watch');
 
-    expect([root.querySelector('.seat-choice'), visitor.role]).toEqual([null, 'spec']);
+    expect([takeButtons(root), root.querySelector<HTMLElement>('form.name')!.hidden, visitor.role]).toEqual([[], true, 'spec']);
   });
 
   it('lets a watcher go back to choosing a seat in the lobby', async () => {
@@ -391,14 +399,14 @@ describe('seat choice', () => {
 
     press(root, 'Choose a seat');
 
-    expect(root.querySelector('.seat-choice')).not.toBeNull();
+    expect(takeButtons(root)).toEqual(['Team A', 'Team B']);
   });
 
-  it('shows no seat choice to a seated captain', async () => {
+  it('shows no Take seat buttons to a seated captain', async () => {
     const { root, visitor } = await setup();
     await visitor.claim('A');
 
-    expect(root.querySelector('.seat-choice')).toBeNull();
+    expect(takeButtons(root)).toEqual([]);
   });
 
   it('shows the choice again after a captain leaves the seat', async () => {
@@ -408,7 +416,7 @@ describe('seat choice', () => {
     press(root, 'Leave seat');
     await flush();
 
-    expect(root.querySelector('.seat-choice')).not.toBeNull();
+    expect(takeButtons(root)).toEqual(['Team A', 'Team B']);
   });
 });
 
@@ -419,13 +427,13 @@ describe('captain name form', () => {
     await room.open(want);
     const root = document.createElement('div');
     mountRoom(root, room);
-    return { room, root, form: root.querySelector('form')!, input: root.querySelector('input')! };
+    return { room, root, form: root.querySelector('form')!, input: root.querySelector('form.name input')! as HTMLInputElement };
   };
 
-  it('is hidden for a spectator', async () => {
-    const { form } = await seated(null);
+  it('is shown empty to a visitor choosing a seat', async () => {
+    const { form, input } = await seated(null);
 
-    expect(form.hidden).toBe(true);
+    expect([form.hidden, input.value]).toEqual([false, '']);
   });
 
   it('is shown to a seated captain with the current name', async () => {
@@ -434,11 +442,17 @@ describe('captain name form', () => {
     expect([form.hidden, input.value]).toEqual([false, 'Team A']);
   });
 
-  it('renames the seat when submitted', async () => {
-    const { room, root, input } = await seated('A');
+  it('has no Set name button', async () => {
+    const { root } = await seated('A');
+
+    expect([...root.querySelectorAll('button')].some((b) => b.textContent === 'Set name')).toBe(false);
+  });
+
+  it('renames the seat when the field changes', async () => {
+    const { room, input } = await seated('A');
     input.value = 'Ada';
 
-    [...root.querySelectorAll('button')].find((x) => x.textContent === 'Set name')!.click();
+    input.dispatchEvent(new Event('change'));
     await new Promise((r) => setTimeout(r, 0));
 
     expect(room.state!.teams.A.name).toBe('Ada');
@@ -451,5 +465,52 @@ describe('captain name form', () => {
     await room.setReady(true);
 
     expect(input.value).toBe('Ad');
+  });
+});
+
+describe('lobby card', () => {
+  const lobby = async (link = 'http://h/#room/r/p') => {
+    const { store } = memoryDraftStore();
+    const preset = makePreset([step('A', 'ban', 'maps', { timer: 60 }), step('B', 'pick', 'maps', { timer: 60 })]);
+    const room = new Room({ store, roomId: 'r', preset, uid: 'ua', now: () => 1000 });
+    await room.open('A');
+    const root = document.createElement('div');
+    mountRoom(root, room, () => 1000, link);
+    return { room, root };
+  };
+
+  it('shows the room state with the ready count', async () => {
+    const { room, root } = await lobby();
+    await room.setReady(true);
+
+    expect(root.querySelector('.room-state')!.textContent).toBe('Waiting for captains \u00b7 1/2 ready');
+  });
+
+  it('keeps the start rule in the status area', async () => {
+    const { root } = await lobby();
+
+    expect(root.querySelector('.room-head .hint')!.textContent).toMatch(/both captains are ready/);
+  });
+
+  it('shows the share link', async () => {
+    const { root } = await lobby('http://h/#room/r/p');
+
+    expect(root.querySelector<HTMLInputElement>('.share input')!.value).toBe('http://h/#room/r/p');
+  });
+
+  it('describes the preset under its title', async () => {
+    const { root } = await lobby();
+
+    expect(root.querySelector('.preset-summary')!.textContent).toBe('2 steps \u00b7 1 ban \u00b7 1 pick \u00b7 maps \u00b7 ~2 min');
+  });
+
+  it('hides the share link once the draft has started', async () => {
+    const { room, root } = await lobby();
+    const other = new Room({ store: (room as unknown as { d: { store: never } }).d.store, roomId: 'r', preset: room.state!.preset, uid: 'ub', now: () => 1000 });
+    await other.open('B');
+    await room.setReady(true);
+    await other.setReady(true);
+
+    expect(root.querySelector<HTMLElement>('.share')!.hidden).toBe(true);
   });
 });

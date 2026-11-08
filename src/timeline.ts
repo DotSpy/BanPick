@@ -44,7 +44,7 @@ export function timeline(preset: Preset, state?: TimelineState, viewer: Team | n
     const ready = t.pause === 'ready';
     const active = !!state && status === 'current' && (ready ? !!state.confirm : !!state.pausing);
     const pauseStatus = active ? 'current' : i < current || (status === 'current' && !active) ? 'done' : 'upcoming';
-    const text = ready ? 'Pause until ready' : `Pause ${t.pause}s`;
+    const text = ready ? 'Pause \u00b7 both confirm' : `Pause ${t.pause}s`;
     const pause = h('li', { className: `tl pause ${pauseStatus}`, title: `${text} before turn ${i + 1}`, ...(active ? { ariaCurrent: 'step' } : {}) },
       h('span', { className: 'tl-head' }, h('i', { textContent: 'PAUSE' })),
       h('span', { className: 'tl-body', textContent: text }));

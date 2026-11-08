@@ -1,4 +1,5 @@
 import type { Preset, Step, Team } from './model';
+import { turnsOf } from './turns';
 
 /** Preset names carry their details after a separator ("2v2 Open pool - exclusive (one by one)"); show the title bold and the details muted. */
 export function splitName(name: string): { title: string; meta: string } {
@@ -48,4 +49,12 @@ export function stepLines(preset: Preset): { team: Team; text: string }[] {
     else if (s.pause) parts.push(`${s.pause}s pause first`);
     return { team: s.team, text: parts.join(' \u00b7 ') };
   });
+}
+/** Room title line: turns, bans, picks, the pools drafted from and the longest the timers can take. */
+export function lobbySummary(preset: Preset): string {
+  const turns = turnsOf(preset);
+  const pools = [...new Set(preset.steps.filter((s) => s.action !== 'choose' && s.pool).map((s) => s.pool as string))];
+  const seconds = turns.reduce((sum, t) => sum + t.timer, 0);
+  const parts = [plural(turns.length, 'step'), summary(preset), pools.join(' + '), seconds > 0 ? '~' + Math.ceil(seconds / 60) + ' min' : ''];
+  return parts.filter(Boolean).join(' \u00b7 ');
 }

@@ -556,3 +556,31 @@ ol.steps > li.drop-after { box-shadow: 0 3px 0 0 var(--primary); }
 ol.steps > li.settle { animation: settle 0.3s ease-out; }
 @keyframes settle { from { transform: scale(1.03); box-shadow: 0 6px 16px rgb(0 0 0 / 0.4); } to { transform: none; box-shadow: none; } }
 @media (prefers-reduced-motion: reduce) { ol.steps > li.row { transition: none; } ol.steps > li.settle { animation: none; } }
+
+/* Room lobby card */
+#app > div.lobby { display: grid; gap: var(--s-3); }
+.lobby .room-head h2 { margin: 0 0 var(--s-1); }
+.preset-summary { margin: 0 0 var(--s-2); color: var(--muted); font-size: var(--fs-sm); }
+.room-state { margin: var(--s-2) 0 0; font-weight: 600; }
+.room-head .hint { margin: 0; }
+.share { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s-2); }
+.share[hidden] { display: none; }
+.share label { flex: 1 1 18rem; }
+.share input { width: 100%; }
+.lobby form.name { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
+.lobby form.name label { flex: 0 1 320px; }
+.lobby form.name input { width: 100%; max-width: 320px; }
+.hint-inline { color: var(--muted); }
+.lobby form.name button[hidden] { display: none; }
+.seats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3); }
+.seats:empty { display: none; }
+.seat-card.seat { flex-direction: column; align-items: flex-start; gap: var(--s-1); padding: var(--s-3); border-left: 4px solid var(--line); }
+.seat-card h3 { margin: 0; font-size: 1rem; }
+.seat-card.team-A { border-left-color: var(--team-a); }
+.seat-card.team-B { border-left-color: var(--team-b); }
+.seat-card .seat-status { margin: 0; font-weight: 400; }
+.seat-card .actions { margin: var(--s-1) 0 0; }
+#app .seat-card button.team-A { background: var(--team-a); border-color: var(--team-a); color: var(--on-primary); }
+#app .seat-card button.team-B { background: var(--team-b); border-color: var(--team-b); color: var(--on-primary); }
+.tl.pause .tl-body { white-space: normal; text-overflow: clip; }
+@media (max-width: 480px) { .seats { grid-template-columns: 1fr; } }

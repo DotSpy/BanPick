@@ -43,7 +43,7 @@ describe('timeline preview (no draft state)', () => {
   it('describes a ready pause as waiting for captains', () => {
     const el = timeline(makePreset([step('A', 'ban', 'maps', { pause: 'ready' })]));
 
-    expect(el.querySelector('.pause')!.textContent).toContain('Pause until ready');
+    expect(el.querySelector('.pause')!.textContent).toContain('Pause \u00b7 both confirm');
   });
 });
 
