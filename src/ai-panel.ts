@@ -82,7 +82,7 @@ export function aiPanel(onOpen: (p: Preset) => void): HTMLElement {
 
   return h(
     'div', { className: 'ai-panel' },
-    h('p', { className: 'hint ai-lead', textContent: 'Give your documents and rules to an AI and have it write a custom preset JSON for you.' }),
+    h('p', { className: 'hint ai-lead', textContent: 'Give your documents and rules to an AI and have it write a custom preset JSON for you. The brief tells the AI to use the WARNO map, division and side icons from github.com/DotSpy/warno-icons.' }),
     h('ol', { className: 'ai-steps' },
       step(1, 'Copy brief', h('p', { textContent: 'The brief explains the preset format to the AI.' }), h('div', { className: 'ai-actions' }, copy, download), copyStatus, brief),
       step(2, 'Paste into any AI chat', h('p', { textContent: 'Add your rules and documents, then ask for one JSON object. Tip: attach your rulebook PDF directly.' }), chats),
