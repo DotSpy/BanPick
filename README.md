@@ -108,8 +108,19 @@ The adapters and anonymous sign-in (src/firebase.ts) have only run against the e
 ```
 npm install
 npm test        # vitest (unit and view tests, no Java needed)
-npx vite build   # production build
+npm run build   # production build (vite build)
 npm run test:rules  # Firestore rules against the emulator (needs a HotSpot JDK 21+)
 npx tsc --noEmit
 npx vite        # builder UI
 ```
+
+## Deploying to GitHub Pages
+
+`.github/workflows/pages.yml` builds and deploys the site on every push to `master` (or by hand from the Actions tab). The live URL is <https://dotspy.github.io/BanPick/>. One-time setup in the repository settings:
+
+1. **Settings > Pages**: set **Source** to **GitHub Actions**.
+2. **Settings > Secrets and variables > Actions > Variables**: add `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID` and `VITE_FIREBASE_APP_ID` with the web-app values from the Firebase console. They identify the project and are not secrets, so repository variables are fine. Without them the site builds and the builder works, but rooms and saved presets show "Firebase is not configured".
+3. In the Firebase console, **Authentication > Settings > Authorized domains**: add `dotspy.github.io`, otherwise anonymous sign-in is refused from the deployed site.
+4. Push to `master` (or run the workflow). The first run creates the `github-pages` environment.
+
+The build sets `BASE_PATH=/BanPick/` (see `vite.config.ts`) so assets load under the project path; routing uses the URL hash, so no 404 fallback is needed. Serving from a custom domain means setting `BASE_PATH` to `/` in the workflow.
