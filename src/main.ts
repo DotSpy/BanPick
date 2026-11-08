@@ -5,6 +5,7 @@ import { mountLauncher } from './launcher';
 import { h } from './dom';
 import { themeToggle } from './theme';
 import { widthControl } from './width';
+import { settingsMenu } from './settings';
 import { installIconPreview } from './preview';
 import { currentUid, db } from './firebase';
 import { firestorePresetStore } from './persist/firestore';
@@ -16,7 +17,7 @@ import { parseRoute, roomLink } from './route';
 import { builtinPresets, presetGroups } from './builtins';
 import type { Preset } from './model';
 
-document.querySelector('.app-header')?.append(widthControl(), themeToggle());
+document.querySelector('.app-header')?.append(settingsMenu(widthControl(), themeToggle()));
 installIconPreview();
 const root = document.getElementById('app')!;
 const show = (text: string) => root.replaceChildren(h('div', { className: 'error-box' }, h('p', { role: 'alert', textContent: text }), h('a', { className: 'button', href: location.pathname, textContent: 'Back to the builder' })));

@@ -37,52 +37,97 @@ describe('links panel', () => {
   });
 });
 
+const pickCard = (root: HTMLElement, id: string) => {
+  const input = root.querySelector(`input[type=radio][value=${id}]`) as HTMLInputElement;
+  input.checked = true;
+  input.dispatchEvent(new Event('change'));
+};
+
+const memory = (seed: Record<string, string> = {}) => {
+  const data = { ...seed };
+  return { getItem: (k: string) => data[k] ?? null, setItem: (k: string, v: string) => void (data[k] = v) };
+};
+
 describe('launcher', () => {
   const presets = [
-    { id: 'one', preset: makePreset([step('A', 'ban', 'maps')]) },
-    { id: 'two', preset: { ...makePreset([step('B', 'ban', 'maps')]), name: 'Second' } },
+    { id: 'one', preset: makePreset([step('A', 'ban', 'maps')]), tag: 'Generic' },
+    { id: 'two', preset: { ...makePreset([step('B', 'ban', 'maps')]), name: 'Second - with details (more)' }, tag: 'WARNO' },
   ];
   const groups = [
     { label: 'Built-in presets', presets: presets.slice(0, 1) },
     { label: 'WARNO presets', presets: presets.slice(1) },
   ];
-  const mount = (onEditCopy = (_p: unknown) => {}) => {
+  const mount = (onEditCopy = (_p: unknown) => {}, storage = memory()) => {
     const root = document.createElement('div');
-    mountLauncher(root, { groups, base: 'http://h/', newId: () => 'room1', onEditCopy, builder: document.createElement('div') });
+    mountLauncher(root, { groups, base: 'http://h/', newId: () => 'room1', onEditCopy, builder: document.createElement('div'), storage });
     return root;
   };
+  const radio = (root: HTMLElement, id: string) => root.querySelector(`input[type=radio][value=${id}]`) as HTMLInputElement;
+  const tab = (root: HTMLElement, name: string) => [...root.querySelectorAll('[role=tab]')].find((t) => t.textContent === name) as HTMLElement;
 
-  it('lists the built-in presets by name', () => {
-    expect([...mount().querySelectorAll('option')].map((o) => o.textContent)).toContain('Second');
+  it('shows one radio card per preset with its name and tag', () => {
+    const cards = [...mount().querySelectorAll('.preset-card')].map((c) => [c.querySelector('strong')!.textContent, c.querySelector('.tag')!.textContent]);
+
+    expect(cards).toEqual([['Test', 'Generic'], ['Second', 'WARNO']]);
   });
 
-  it('selects the first listed preset by default', () => {
+  it('shows the name details on a muted second line with the pick and ban counts', () => {
+    const meta = mount().querySelectorAll('.card-meta')[1].textContent;
+
+    expect(meta).toBe('with details \u00b7 more \u00b7 1 ban \u00b7 0 picks');
+  });
+
+  it('selects the first card by default and previews it', () => {
     const root = mount();
 
-    expect((root.querySelector('select') as HTMLSelectElement).value).toBe('one');
+    expect([radio(root, 'one').checked, root.querySelector('.preset-preview h3')!.textContent]).toEqual([true, 'Test']);
+  });
+
+  it('previews the card the user selects', () => {
+    const root = mount();
+
+    pickCard(root, 'two');
+
+    expect([root.querySelector('.preset-preview h3')!.textContent, root.querySelector('.preview-steps li')!.textContent]).toEqual(['Second', 'Team B bans maps']);
+  });
+
+  it('puts each preset card under its labelled group', () => {
+    const root = mount();
+
+    const shown = [...root.querySelectorAll('fieldset')].map((g) => [g.querySelector('legend')!.textContent, [...g.querySelectorAll('input')].map((i) => i.value)]);
+
+    expect(shown).toEqual([['Built-in presets', ['one']], ['WARNO presets', ['two']]]);
+  });
+
+  it('uses no native select', () => {
+    expect(mount().querySelector('select')).toBeNull();
+  });
+
+  it('explains the three steps under the title', () => {
+    expect(mount().querySelector('.onboarding')!.textContent).toBe('Pick a preset, create a room, share the link with the other team.');
+  });
+
+  it('lists the preset builder as its own tab between the presets and Build with AI', () => {
+    expect([...mount().querySelectorAll('[role=tab]')].map((t) => t.textContent)).toEqual(['Built-in presets', 'Preset builder', 'Build with AI']);
+  });
+
+  it('puts a sparkle icon on the Build with AI tab', () => {
+    expect(tab(mount(), 'Build with AI').querySelector('svg.glyph')).not.toBeNull();
   });
 
   it('shows the Build with AI tab only after it is selected', () => {
     const root = mount();
-    const tab = [...root.querySelectorAll('[role=tab]')].find((t) => t.textContent === 'Build with AI') as HTMLElement;
+    const ai = tab(root, 'Build with AI');
 
     const before = (root.querySelectorAll('[role=tabpanel]')[2] as HTMLElement).hidden;
-    tab.click();
+    ai.click();
 
-    expect([before, (root.querySelectorAll('[role=tabpanel]')[2] as HTMLElement).hidden, tab.getAttribute('aria-selected')]).toEqual([true, false, 'true']);
+    expect([before, (root.querySelectorAll('[role=tabpanel]')[2] as HTMLElement).hidden, ai.getAttribute('aria-selected')]).toEqual([true, false, 'true']);
   });
 
-  it('puts each preset under its labelled group', () => {
+  it('creates a room with one shared link for the selected card', () => {
     const root = mount();
-
-    const groupsShown = [...root.querySelectorAll('optgroup')].map((g) => [g.label, [...g.querySelectorAll('option')].map((o) => o.value)]);
-
-    expect(groupsShown).toEqual([['Built-in presets', ['one']], ['WARNO presets', ['two']]]);
-  });
-
-  it('creates a room with one shared link', () => {
-    const root = mount();
-    (root.querySelector('select') as HTMLSelectElement).value = 'two';
+    pickCard(root, 'two');
 
     click(root, 'Create room');
 
@@ -97,53 +142,73 @@ describe('launcher', () => {
     expect(root.querySelector('p.hint[role=status]')!.textContent).toContain('Room created');
   });
 
-  it('styles Edit copy as a secondary action', () => {
-    const root = mount();
+  it('puts the actions after the list, with Create room last and filled', () => {
+    const actions = [...mount().querySelectorAll('.launcher-actions button')];
 
-    const btn = [...root.querySelectorAll('button')].find((b) => b.textContent === 'Edit copy')!;
-
-    expect(btn.classList.contains('secondary')).toBe(true);
+    expect([actions.map((b) => b.textContent), actions[0].classList.contains('ghost'), actions[0].querySelector('svg')!== null, actions[1].querySelector('svg') !== null]).toEqual([['Edit copy', 'Create room'], true, true, true]);
   });
 
-  it('hands a copy of the chosen preset to the builder', () => {
+  it('hands a copy of the selected preset to the builder and opens its tab', () => {
     const edited: unknown[] = [];
     const root = mount((p) => edited.push(p));
 
     click(root, 'Edit copy');
 
-    expect(edited[0]).toEqual(presets[0].preset);
-    expect(edited[0]).not.toBe(presets[0].preset);
-  });
-
-  it('lists the preset builder as its own tab between the presets and Build with AI', () => {
-    const root = mount();
-
-    expect([...root.querySelectorAll('[role=tab]')].map((t) => t.textContent)).toEqual(['Built-in presets', 'Preset builder', 'Build with AI']);
-  });
-
-  it('shows the whole preset list expanded', () => {
-    const root = mount();
-
-    expect((root.querySelector('select') as HTMLSelectElement).size).toBe(4);
-  });
-
-  it('switches to the builder tab when a copy is sent to it', () => {
-    const root = mount();
-
-    click(root, 'Edit copy');
-
-    const tab = [...root.querySelectorAll('[role=tab]')].find((t) => t.textContent === 'Preset builder')!;
-    expect([tab.getAttribute('aria-selected'), (root.querySelectorAll('[role=tabpanel]')[1] as HTMLElement).hidden]).toEqual(['true', false]);
+    expect([edited[0], edited[0] === presets[0].preset, tab(root, 'Preset builder').getAttribute('aria-selected')]).toEqual([presets[0].preset, false, 'true']);
   });
 
   it('does not load a preset into the builder just because the selection changes', () => {
     const edited: unknown[] = [];
     const root = mount((p) => edited.push(p));
-    const select = root.querySelector('select') as HTMLSelectElement;
-    select.value = 'two';
 
-    select.dispatchEvent(new Event('change'));
+    pickCard(root, 'two');
 
     expect(edited).toEqual([]);
+  });
+});
+
+describe('launcher, recently used', () => {
+  const entries = [
+    { id: 'one', preset: makePreset([step('A', 'ban', 'maps')]), tag: 'Generic' },
+    { id: 'two', preset: { ...makePreset([step('B', 'ban', 'maps')]), name: 'Second' }, tag: 'WARNO' },
+  ];
+  const mount = (storage = memory()) => {
+    const root = document.createElement('div');
+    mountLauncher(root, { groups: [{ label: 'All', presets: entries }], base: 'http://h/', newId: () => 'r', onEditCopy: () => {}, builder: document.createElement('div'), storage });
+    return root;
+  };
+
+  it('hides the section while there is no history', () => {
+    expect((mount().querySelector('.recent') as HTMLElement).hidden).toBe(true);
+  });
+
+  it('shows the presets used before, newest first', () => {
+    const root = mount(memory({ 'banpick-recent': JSON.stringify(['two', 'one']) }));
+
+    expect([...root.querySelectorAll('.recent .chip')].map((c) => c.textContent)).toEqual(['Second', 'Test']);
+  });
+
+  it('remembers a preset once a room is created from it', () => {
+    const storage = memory();
+    const root = mount(storage);
+    pickCard(root, 'two');
+
+    click(root, 'Create room');
+
+    expect([storage.getItem('banpick-recent'), (root.querySelector('.recent') as HTMLElement).hidden]).toEqual(['["two"]', false]);
+  });
+
+  it('selects a preset again from its chip', () => {
+    const root = mount(memory({ 'banpick-recent': '["two"]' }));
+
+    (root.querySelector('.recent .chip') as HTMLElement).click();
+
+    expect((root.querySelector('input[value=two]') as HTMLInputElement).checked).toBe(true);
+  });
+
+  it('ignores remembered ids that no longer exist', () => {
+    const root = mount(memory({ 'banpick-recent': '["gone"]' }));
+
+    expect((root.querySelector('.recent') as HTMLElement).hidden).toBe(true);
   });
 });
