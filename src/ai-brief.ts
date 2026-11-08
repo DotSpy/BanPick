@@ -1,9 +1,6 @@
 import type { ZodObject } from 'zod';
 import { examplePresets } from './examples';
 import type { Preset } from './model';
-import { ICONS_BASE } from './warno/preset';
-
-const ICONS_REPO_URL = 'https://github.com/DotSpy/warno-icons';
 import { itemSchema, poolSchema, presetSchema, stepSchema, taggingSchema } from './schema';
 
 /** The smallest valid preset: one shared pool, one ban and one pick, no tags. */
@@ -105,12 +102,6 @@ export function buildAiBrief(example: Preset = fullExample()): string {
     '- Banned items stay visible in the pool, greyed out with a red cross, and cannot be chosen again. Picked items leave the pool.',
     '- Pools with few items are shown as large tiles. Set `iconSize` to `small`, `medium` or `large` to size the images.',
     '- A step with `random: true` adds a Random tile as the last tile of the pool.',
-    '## Item images',
-    `- WARNO maps, divisions and sides have ready icons in the GitHub repo DotSpy/warno-icons. Set each item's \`image\` to \`${ICONS_BASE}<path>\`, where \`<path>\` is the file's path in that repo. Browse ${ICONS_REPO_URL} to find it, and never invent a path.`,
-    '- Maps are in `1v1/`, `2v2/` and `3v3/` (for example `1v1/airport.png`). Divisions are in `divisions/<nato|pact>/<nation>/` (for example `divisions/nato/us/101us.png`). Sides are `sides/nato.png` and `sides/pact.png`, which suit `tagging.images`.',
-    '- Percent-encode spaces in a path as `%20`.',
-    `- Example: \`"image": "${ICONS_BASE}1v1/airport.png"\`.`,
-    '- Use an icon only when it exists in the repo; leave `image` out for any other item.',
     '## Validation rules',
     rules.map((r) => `- ${r}`).join('\n'),
     '## Minimal valid example',
@@ -118,7 +109,7 @@ export function buildAiBrief(example: Preset = fullExample()): string {
     `## Full example: ${example.name}`,
     json(example),
     '## Output',
-    'Return one JSON object only. If my rules cannot be expressed in this format, pick the closest valid preset and put nothing else in the reply.',
+    'Return one JSON object only wrapped in ```json ```. If my rules cannot be expressed in this format, pick the closest valid preset and put nothing else in the reply.',
     '',
   ].join('\n');
 }
