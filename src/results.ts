@@ -27,7 +27,7 @@ export interface DraftResults {
   teams: [TeamResult, TeamResult];
   durationMs: number | null;
   finishedAt: number | null;
-  steps: { index: number; team: Team; action: Turn['action']; label: string }[];
+  steps: { index: number; team: Team; action: Turn['action']; id: string; label: string }[];
 }
 
 const TEAMS: Team[] = ['A', 'B'];
@@ -63,7 +63,7 @@ export function draftResults(state: DraftState, viewer: Team | null = null): Dra
     teams: [ra, rb],
     durationMs: state.startedAt != null && state.finishedAt != null ? Math.max(0, state.finishedAt - state.startedAt) : null,
     finishedAt: state.finishedAt,
-    steps: entries.map((e) => ({ index: e.index, team: e.team, action: e.action, label: choiceFor(state, e).name })),
+    steps: entries.map((e) => ({ index: e.index, team: e.team, action: e.action, id: e.itemId, label: choiceFor(state, e).name })),
   };
 }
 

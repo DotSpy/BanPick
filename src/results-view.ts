@@ -1,7 +1,7 @@
 import { btn, h } from './dom';
 import type { DraftState } from './draft';
 import { itemIcon } from './icon';
-import type { Team } from './model';
+import type { Team, Turn } from './model';
 import { choiceOf } from './rules';
 import { draftResults, formatDuration, teamTitle, type Choice, type DraftResults } from './results';
 
@@ -58,7 +58,7 @@ const loadImage = (url: string) =>
     img.src = url;
   });
 
-const imageFor = (state: DraftState, action: 'pick' | 'ban', c: Choice) => {
+const imageFor = (state: DraftState, action: Turn['action'], c: Pick<Choice, 'id'>) => {
   const url = choiceOf(state.preset, action, c.id).item?.image;
   return url ? loadImage(url) : Promise.resolve(null);
 };
@@ -85,6 +85,8 @@ type Loaded = { name: string; img: HTMLImageElement | null; by?: string };
 /** PNG of the step order and the results laid out like the result page: shared rows, then picks, then muted bans per team. Item images are loaded CORS-safe first; failures draw a letter tile. */
 export async function resultsImage(state: DraftState, r: DraftResults): Promise<Blob | null> {
   const load = (action: 'pick' | 'ban', list: Choice[]): Promise<Loaded[]> => Promise.all(list.map(async (c) => ({ name: c.name, by: c.by, img: await imageFor(state, action, c) })));
+  // The step order shows the same icons as the on-screen timeline, so every step icon is awaited before drawing.
+  const stepIcons = await Promise.all(r.steps.map((s) => imageFor(state, s.action, s)));
   const shared = await Promise.all(r.shared.map(async (s) => ({ target: cap(rowLabel(s.target, s.picks.length)), list: await load('pick', s.picks) })));
   const teams = await Promise.all(
     r.teams.map(async (t) => ({
@@ -97,7 +99,7 @@ export async function resultsImage(state: DraftState, r: DraftResults): Promise<
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   if (!ctx) return null;
-  const [cw, ch, gap, cols] = [138, 46, 8, 8];
+  const [cw, ch, gap, cols, stepIcon] = [138, 46, 8, 8, 30];
   canvas.width = W;
   canvas.height = 4000;
   ctx.fillStyle = '#0f1420';
@@ -106,7 +108,6 @@ export async function resultsImage(state: DraftState, r: DraftResults): Promise<
   ctx.fillStyle = TEXT;
   ctx.font = `bold 20px ${FONT}`;
   ctx.fillText(`${r.preset}${r.durationMs != null ? ` \u00b7 ${formatDuration(r.durationMs)}` : ''}`, PAD, 36);
-  ctx.font = `13px ${FONT}`;
   r.steps.forEach((s, i) => {
     const [x, y] = [PAD + (i % cols) * (cw + gap), 60 + Math.floor(i / cols) * (ch + gap)];
     ctx.fillStyle = '#182033';
@@ -114,10 +115,16 @@ export async function resultsImage(state: DraftState, r: DraftResults): Promise<
     ctx.strokeStyle = TEAM_COLOUR[s.team];
     ctx.lineWidth = 2;
     ctx.strokeRect(x, y, cw, ch);
+    const img = stepIcons[i];
+    const [ix, iy] = [x + 6, y + (ch - stepIcon) / 2];
+    if (img) ctx.drawImage(img, ix, iy, stepIcon, stepIcon);
+    else placeholder(ctx, s.label, ix, iy, stepIcon);
+    const tx = ix + stepIcon + 6;
+    ctx.font = `13px ${FONT}`;
     ctx.fillStyle = ACTION_COLOUR[s.action];
-    ctx.fillText(`${s.index + 1} ${s.team} ${s.action.toUpperCase()}`, x + 8, y + 15);
+    ctx.fillText(`${s.index + 1} ${s.team} ${s.action.toUpperCase()}`, tx, y + 15);
     ctx.fillStyle = TEXT;
-    ctx.fillText(clip(ctx, s.label, cw - 16), x + 8, y + 33);
+    ctx.fillText(clip(ctx, s.label, x + cw - tx - 6), tx, y + 33);
   });
 
   /** Draws a labelled vertical list of items and returns the y below it. */
