@@ -1,6 +1,6 @@
 import { btn, h } from '../dom';
 import { currentTurn, type DraftState } from '../draft';
-import type { Team, Turn } from '../model';
+import type { IconSize, Team, Turn } from '../model';
 import { itemIcon } from '../icon';
 import { finishedView } from '../results-view';
 import { timeline } from '../timeline';
@@ -44,10 +44,21 @@ const icon = (s: DraftState, action: Turn['action'], id: string) => {
   return itemIcon(item, '', size);
 };
 
+/** Tile icons survive re-renders: reusing the same <img> avoids a reload and repaint (the blink) on every live update. */
+const tileIcons = new Map<string, HTMLElement>();
+const tileIcon = (item: Parameters<typeof itemIcon>[0], size: IconSize, key: string) => {
+  const cached = tileIcons.get(key);
+  const img = cached?.querySelector('img');
+  if (cached && img && !(img.complete && img.naturalWidth === 0)) return cached;
+  const fresh = itemIcon(item, '', size);
+  if (fresh) tileIcons.set(key, fresh);
+  return fresh;
+};
+
 function itemButton(s: DraftState, turn: Turn, id: string, disabled: boolean, selected: boolean, onClick: () => void) {
   const { item, size } = choiceOf(s.preset, turn.action, id);
   const banned = !isAvailable(s, turn, id);
-  return h('button', { type: 'button', disabled: disabled || banned, className: `${selected ? 'selected ' : ''}${banned ? 'banned ' : ''}tile-${size}`.trim(), ariaPressed: String(selected), title: item?.name ?? id, onclick: onClick }, itemIcon(item, '', size), h('span', { className: 'tile-name', textContent: item?.name ?? id }));
+  return h('button', { type: 'button', disabled: disabled || banned, className: `${selected ? 'selected ' : ''}${banned ? 'banned ' : ''}tile-${size}`.trim(), ariaPressed: String(selected), title: item?.name ?? id, onclick: onClick }, tileIcon(item, size, `${turn.action}:${id}:${size}`), h('span', { className: 'tile-name', textContent: item?.name ?? id }));
 }
 
 /** Last tile of a random-enabled step: resolves the turn with a random available item. */

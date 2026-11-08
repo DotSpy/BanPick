@@ -9,6 +9,14 @@ import { decideClaim, freeSeat, renameSeat } from './claim';
 
 const WRITE_ATTEMPTS = 3;
 
+/** User-facing text for a failed write. Permission errors are not a connection problem, so they say so and keep the error code. */
+export function saveFailure(e: unknown): string {
+  const code = (e as { code?: string } | null)?.code;
+  if (code === 'permission-denied') return 'Could not save your change: the server refused it (permission-denied). Reload the page; if it persists, the database rules may be out of date.';
+  const base = 'Could not save your change. Check your connection and try again.';
+  return code ? `${base} (${code})` : base;
+}
+
 /** Transport port. The Firestore adapter implements it; tests use an in-memory one. */
 export interface DraftStore {
   /** Writes `doc` only if the draft does not exist yet. */
@@ -158,8 +166,8 @@ export class Room {
         WRITE_ATTEMPTS,
         this.wait,
       );
-    } catch {
-      return 'Could not save your change. Check your connection and try again.';
+    } catch (e) {
+      return saveFailure(e);
     }
     return refusal;
   }

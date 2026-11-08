@@ -101,7 +101,7 @@ Known limits: captains are trusted peers, so a seat owner can forge `deadline`, 
 
 ## Not verified against a real Firebase project
 
-The adapters and anonymous sign-in (src/firebase.ts) have only run against the emulator. To verify: create a dedicated Firebase project, enable Anonymous sign-in, set the VITE_FIREBASE_* variables, deploy irestore.rules, and run a two-browser draft. Do not reuse another app's project, since deploying the rules replaces its existing ones.
+The adapters and anonymous sign-in (src/firebase.ts) have only run against the emulator. To verify: create a dedicated Firebase project, enable Anonymous sign-in, set the VITE_FIREBASE_* variables, deploy `firestore.rules` (`firebase deploy --only firestore:rules --project <id>`; the deployed rules must match this repo, otherwise picks and bans fail with `permission-denied`), and run a two-browser draft. Do not reuse another app's project, since deploying the rules replaces its existing ones.
 
 ## Development
 
