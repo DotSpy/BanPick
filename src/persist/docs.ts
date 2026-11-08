@@ -55,6 +55,11 @@ export function presetFromDoc(doc: PresetDoc): Loaded<Preset> {
 
 export const canEditPreset = (doc: Pick<PresetDoc, 'ownerUid'>, uid: string | null) => uid !== null && doc.ownerUid === uid;
 
+/** Presets are kept for 6 months after their last save; firestore.rules uses the same number. */
+export const PRESET_TTL_MS = 183 * 24 * 60 * 60 * 1000;
+
+export const isPresetExpired = (doc: Pick<PresetDoc, 'updatedAt'>, now: number) => now - doc.updatedAt >= PRESET_TTL_MS;
+
 // Top-level fields exist only so security rules can inspect seats, position, history and confirmations.
 // presetJson keeps the stored preset byte-for-byte on later writes; rules require it to stay unchanged.
 export function draftToDoc(s: DraftState, now: number, presetJson = JSON.stringify(s.preset)): DraftDoc {
