@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, expect, it } from 'vitest';
-import { aiPanel } from '../src/ai-panel';
+import { aiPanel, errorLine } from '../src/ai-panel';
 import { buildAiBrief, fieldNotes, fullExample, minimalExample } from '../src/ai-brief';
 import { itemSchema, poolSchema, presetSchema, stepSchema, taggingSchema, validatePreset } from '../src/schema';
 import type { Preset } from '../src/model';
@@ -46,8 +46,10 @@ describe('AI brief', () => {
 describe('Build with AI panel', () => {
   const mount = (onOpen = (_p: Preset) => {}) => aiPanel(onOpen);
   const paste = (el: HTMLElement, text: string) => {
-    (el.querySelector('textarea') as HTMLTextAreaElement).value = text;
-    [...el.querySelectorAll('button')].find((b) => b.textContent === 'Validate')!.click();
+    const box = el.querySelector('textarea') as HTMLTextAreaElement;
+    box.value = text;
+    box.dispatchEvent(new Event('input'));
+    [...el.querySelectorAll('button')].find((b) => b.textContent === 'Validate & preview')!.click();
   };
 
   it('copies the brief to the clipboard', async () => {
@@ -58,7 +60,7 @@ describe('Build with AI panel', () => {
     [...el.querySelectorAll('button')].find((b) => b.textContent === 'Copy AI brief')!.click();
     await new Promise((r) => setTimeout(r, 0));
 
-    expect([copied, el.querySelector('[role=status]')!.textContent]).toEqual([[buildAiBrief()], 'Copied']);
+    expect([copied, [...el.querySelectorAll('button')].find((b) => b.textContent?.startsWith('Copied'))!.textContent]).toEqual([[buildAiBrief()], 'Copied \u2713']);
   });
 
   it('offers the example as a JSON download', () => {
@@ -90,6 +92,33 @@ describe('Build with AI panel', () => {
     paste(el, JSON.stringify(minimalExample));
     [...el.querySelectorAll('button')].find((b) => b.textContent === 'Open in builder')!.click();
 
-    expect([el.querySelector('.ok')!.textContent, opened.map((p) => p.name)]).toEqual(['valid', ['Minimal draft']]);
+    expect([el.querySelector('.ok')!.textContent, opened.map((p) => p.name)]).toEqual([expect.stringContaining('Valid: Minimal draft'), ['Minimal draft']]);
+  });
+
+  it('shows the three steps in order', () => {
+    expect([...mount().querySelectorAll('.ai-step strong')].map((s) => s.textContent)).toEqual(['Copy brief', 'Paste into any AI chat', 'Paste JSON here']);
+  });
+
+  it('disables Validate until the field has text', () => {
+    const el = mount();
+    const button = [...el.querySelectorAll('button')].find((b) => b.textContent === 'Validate & preview') as HTMLButtonElement;
+    const before = button.disabled;
+    const box = el.querySelector('textarea') as HTMLTextAreaElement;
+    box.value = '{}';
+    box.dispatchEvent(new Event('input'));
+
+    expect([before, button.disabled]).toEqual([true, false]);
+  });
+
+  it('says nothing is uploaded', () => {
+    expect(mount().textContent).toContain('nothing is uploaded');
+  });
+
+  it('shows the brief on request', () => {
+    expect(mount().querySelector('details.brief pre')!.textContent).toBe(buildAiBrief());
+  });
+
+  it('puts a line number on a syntax error', () => {
+    expect(errorLine('{\n"a": x', 'Unexpected token at position 7')).toBe(2);
   });
 });
