@@ -207,6 +207,12 @@ export function alternateSteps(p: Preset, action: 'ban' | 'pick', pool: string, 
   });
 }
 
+/** Final index of a dragged step dropped before or after row `row`. */
+export const dropIndex = (from: number, row: number, after: boolean) => {
+  const position = row + (after ? 1 : 0);
+  return from < position ? position - 1 : position;
+};
+
 export function moveStep(p: Preset, from: number, to: number): Preset {
   if (to < 0 || to >= p.steps.length || from === to) return p;
   return edit(p, (c) => {

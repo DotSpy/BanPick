@@ -30,7 +30,7 @@ describe('builder view', () => {
     const labels = [...root.querySelectorAll('label')].map((l) => l.textContent);
 
     expect(labels).toEqual(expect.arrayContaining([expect.stringContaining('Preset name'), expect.stringContaining('Timer (s)')]));
-    expect(root.querySelector('summary')!.textContent).toBe('Preset JSON (advanced)');
+    expect(root.querySelector('.json-adv summary')!.textContent).toBe('Preset JSON (advanced)');
   });
 
   it('adding a step grows the preview', () => {
@@ -440,7 +440,7 @@ describe('builder layout and tools', () => {
   it('reorders steps when one is dropped on another', () => {
     const { root, b } = mountWith({ ...newPreset(), steps: [{ team: 'A', action: 'ban', pool: 'items', count: 1 }, { team: 'B', action: 'pick', pool: 'items', count: 1 }] });
     const drop = new Event('drop', { cancelable: true });
-    Object.assign(drop, { dataTransfer: { getData: () => '0' } });
+    Object.assign(drop, { clientY: 1e6, dataTransfer: { getData: () => '0' } });
 
     root.querySelectorAll('ol.steps > li')[1].dispatchEvent(drop);
 

@@ -50,6 +50,7 @@ const iconButton = (name: GlyphName, label: string, onClick: () => void) =>
   h('button', { type: 'button', className: 'icon ghost', ariaLabel: label, title: label, onclick: onClick }, glyph(name));
 
 const FOCUSABLE = 'input, select, textarea, button';
+const NO_DRAG = 'input, select, textarea, a, button.icon';
 const TEAMS = [{ value: 'A', label: 'Team A' }, { value: 'B', label: 'Team B' }];
 const PAGE = 50;
 
@@ -125,21 +126,60 @@ export function mountBuilder(root: HTMLElement, initial: Preset, onSave?: (p: Pr
       s.action === 'choose' ? '' : toggle('Random', !!s.random, 'random', `Step ${i + 1} allows random`));
   };
 
+  let dragFrom: number | null = null;
+  let settle: number | null = null;
+  const clearDrop = () => content.querySelectorAll('.drop-before, .drop-after').forEach((el) => el.classList.remove('drop-before', 'drop-after'));
+  const endDrag = () => {
+    dragFrom = null;
+    clearDrop();
+    content.querySelectorAll('.lifted, .dragging').forEach((el) => el.classList.remove('lifted', 'dragging'));
+  };
+  /** The row is styled as lifted while the browser snapshots the drag image, then dimmed where it came from. */
+  const liftStep = (e: DragEvent, i: number) => {
+    const row = e.currentTarget as HTMLElement;
+    dragFrom = i;
+    e.dataTransfer?.setData('text/plain', String(i));
+    if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
+    row.classList.add('lifted');
+    later(() => row.classList.replace('lifted', 'dragging'));
+  };
+  const isAfter = (e: DragEvent) => {
+    const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    return e.clientY > r.top + r.height / 2;
+  };
+  const overStep = (e: DragEvent, i: number) => {
+    if (dragFrom === null) return;
+    e.preventDefault();
+    const row = e.currentTarget as HTMLElement;
+    const after = isAfter(e);
+    row.classList.toggle('drop-after', after);
+    row.classList.toggle('drop-before', !after);
+  };
+  const dropStep = (e: DragEvent, i: number) => {
+    e.preventDefault();
+    const from = dragFrom ?? Number(e.dataTransfer?.getData('text/plain'));
+    const to = E.dropIndex(from, i, isAfter(e));
+    endDrag();
+    if (!Number.isInteger(from)) return;
+    settle = to;
+    stepOp(E.moveStep(preset, from, to));
+  };
   const stepRow = (s: Step, i: number, warnings: string[]) => {
     const open = openStep === i;
     return h(
       'li', {
         className: 'row step',
-        ondragover: (e: Event) => e.preventDefault(),
-        ondrop: (e: Event) => {
-          e.preventDefault();
-          const from = Number((e as DragEvent).dataTransfer?.getData('text/plain'));
-          if (Number.isInteger(from)) stepOp(E.moveStep(preset, from, i));
-        },
+        draggable: true,
+        onpointerdown: (e: Event) => ((e.currentTarget as HTMLElement).draggable = !(e.target as HTMLElement).closest(NO_DRAG)),
+        ondragstart: (e: DragEvent) => liftStep(e, i),
+        ondragend: endDrag,
+        ondragover: (e: DragEvent) => overStep(e, i),
+        ondragleave: (e: DragEvent) => (e.currentTarget as HTMLElement).classList.remove('drop-before', 'drop-after'),
+        ondrop: (e: DragEvent) => dropStep(e, i),
       },
       h('div', { className: 'step-head' },
         h('span', { className: 'num', textContent: String(i + 1) }),
-        h('span', { className: 'handle', textContent: '\u22ee\u22ee', title: 'Drag to reorder', draggable: true, ondragstart: (e: Event) => (e as DragEvent).dataTransfer?.setData('text/plain', String(i)) }),
+        h('span', { className: 'handle', textContent: '\u22ee\u22ee', title: 'Drag to reorder' }),
         h('button', { type: 'button', className: 'step-summary', ariaExpanded: String(open), ariaLabel: `Edit step ${i + 1}`, title: 'Click to edit', onclick: () => { openStep = open ? null : i; render(); } }, stepSummary(s, i)),
         btn('\u2191', () => stepOp(E.moveStep(preset, i, i - 1)), { className: 'icon ghost', ariaLabel: `Move step ${i + 1} up` }),
         btn('\u2193', () => stepOp(E.moveStep(preset, i, i + 1)), { className: 'icon ghost', ariaLabel: `Move step ${i + 1} down` }),
@@ -204,6 +244,21 @@ export function mountBuilder(root: HTMLElement, initial: Preset, onSave?: (p: Pr
     }
   };
 
+  const poolMenu = (name: string, picker: HTMLElement) => {
+    const menu = h('details', { className: 'pool-actions menu' }) as HTMLDetailsElement;
+    const item = (label: string, onClick: () => void, extra: Record<string, unknown> = {}) =>
+      btn(label, () => { menu.open = false; onClick(); }, { className: 'ghost menu-item', ...extra });
+    menu.append(
+      h('summary', { ariaLabel: `${name} pool actions`, title: 'Pool actions' }, glyph('more')),
+      h('div', { className: 'menu-list' },
+        item('Paste list', () => { openPool = name; bulkFor = bulkFor === name ? null : name; render(); }, { title: 'Add many items at once, one per line' }),
+        item('Import', () => (picker as HTMLInputElement).click(), { title: 'Import items from a CSV (id,name,"tag=value, …",image) or JSON file' }),
+        item('Export', () => exportItems(name), { title: 'Copy the items as JSON' }),
+        item('Remove pool', () => { if (openPool === name) openPool = null; update(E.removePool(preset, name)); }, { className: 'ghost menu-item danger', ariaLabel: 'Remove pool' })),
+      picker);
+    return menu;
+  };
+
   const poolBlock = (name: string) => {
     const pool = preset.pools[name];
     const open = openPool === name;
@@ -229,12 +284,7 @@ export function mountBuilder(root: HTMLElement, initial: Preset, onSave?: (p: Pr
           h('span', { className: 'chev', textContent: open ? '\u25be' : '\u25b8' }), poolSummary(name, pool)),
         chipSelect('Scope', `${name} scope`, pool.scope ?? 'global', ['global', 'shared', 'exclusive'], (v) => update(E.setPoolScope(preset, name, v as 'global'))),
         chipSelect('Size', `${name} icon size`, pool.iconSize ?? 'medium', ['small', 'medium', 'large'], (v) => update(E.setPoolIconSize(preset, name, v as IconSize))),
-        h('span', { className: 'pool-actions' },
-          btn('Paste list', () => { openPool = name; bulkFor = bulkFor === name ? null : name; render(); }, { className: 'secondary', ariaExpanded: String(bulkFor === name), title: 'Add many items at once, one per line' }),
-          btn('Import', () => (picker as HTMLInputElement).click(), { className: 'ghost', title: 'Import items from a CSV (id,name,"tag=value, …",image) or JSON file' }),
-          picker,
-          btn('Export', () => exportItems(name), { className: 'ghost', title: 'Copy the items as JSON' }),
-          iconButton('trash', 'Remove pool', () => { if (openPool === name) openPool = null; update(E.removePool(preset, name)); }))),
+        poolMenu(name, picker)),
       open ? body : '');
   };
 
@@ -295,11 +345,12 @@ export function mountBuilder(root: HTMLElement, initial: Preset, onSave?: (p: Pr
     const { tag, values, images } = preset.tagging;
     if (!values?.length) return [];
     return [
-      h('h3', {}, `${tag ?? 'Tag'} values`),
-      h('ul', {}, ...values.map((value) =>
+      h('h3', {}, `Side values (${tag ?? 'tag'})`),
+      h('p', { className: 'hint', textContent: 'Images for the side-choice step: one icon per value the choosing team can pick.' }),
+      h('ul', { className: 'side-values' }, ...values.map((value) =>
         h('li', { className: 'row' },
-          h('span', { textContent: value }),
-          input(`${value} image link`, images?.[value] ?? '', (v) => update(E.setTagImage(preset, value, v)), { placeholder: 'https://\u2026' }),
+          h('span', { className: 'side-name', textContent: value }),
+          field('Image link', input(`${value} image link`, images?.[value] ?? '', (v) => update(E.setTagImage(preset, value, v)), { placeholder: 'https://\u2026' })),
           itemIcon({ name: value, image: images?.[value] }, value),
         ))),
     ];
@@ -369,6 +420,8 @@ export function mountBuilder(root: HTMLElement, initial: Preset, onSave?: (p: Pr
           orderLane(preset, showStep, hoverStep),
           rawJson())),
     );
+    if (settle !== null) stepRowAt(settle)?.classList.add('settle');
+    settle = null;
     footer(result.ok ? result.preset : null, errors.length, JSON.stringify(preset) !== clean);
     if (focused >= 0) (root.querySelectorAll(FOCUSABLE)[focused] as HTMLElement | undefined)?.focus();
   }

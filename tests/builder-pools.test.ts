@@ -107,7 +107,7 @@ describe('collapsible pools', () => {
   it('offers Import and Export in the pool header', () => {
     const { root } = mount(bigPreset(2));
 
-    expect([...root.querySelectorAll('.pool-actions button')].map((b) => b.textContent)).toEqual(['Paste list', 'Import', 'Export', '']);
+    expect([...root.querySelectorAll('.pool-actions .menu-item')].map((b) => b.textContent)).toEqual(['Paste list', 'Import', 'Export', 'Remove pool']);
   });
 });
 
@@ -188,5 +188,72 @@ describe('item import and step repeat edits', () => {
 
   it('uses the singular for one item in the pool header', () => {
     expect(poolSummary('maps', { items: [{ id: 'a', name: 'A' }] })).toBe('maps \u00b7 1 item');
+  });
+});
+
+describe('pool header menu', () => {
+  it('keeps scope and size on the header row, with bulk actions in the menu', () => {
+    const { root } = mount(bigPreset(2));
+
+    expect([...root.querySelectorAll('.pool-head > *')].map((e) => e.className.split(' ')[0])).toEqual(['pool-toggle', 'chip-select', 'chip-select', 'pool-actions']);
+  });
+
+  it('closes the menu after an action', () => {
+    const { root } = mount(bigPreset(2));
+    const menu = root.querySelector('details.pool-actions') as HTMLDetailsElement;
+    menu.open = true;
+
+    clickText(root, 'Export');
+
+    expect(menu.open).toBe(false);
+  });
+});
+
+describe('step drag', () => {
+  const dragged = (root: HTMLElement, from: number, to: number, clientY: number) => {
+    const rows = root.querySelectorAll('ol.steps > li');
+    rows[from].dispatchEvent(new Event('dragstart', { bubbles: true }));
+    const over = new Event('dragover', { bubbles: true, cancelable: true });
+    Object.assign(over, { clientY });
+    rows[to].dispatchEvent(over);
+    rows[to].dispatchEvent(Object.assign(new Event('drop', { bubbles: true, cancelable: true }), { clientY }));
+  };
+  const twoSteps = () => ({ ...newPreset(), steps: [{ team: 'A', action: 'ban', pool: 'items', count: 1 }, { team: 'B', action: 'ban', pool: 'items', count: 1 }] }) as Preset;
+
+  it('is started from the row, not only the handle', () => {
+    const { root } = mount(twoSteps());
+    const row = root.querySelector('ol.steps > li') as HTMLElement;
+
+    row.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+
+    expect(row.draggable).toBe(true);
+  });
+
+  it('is not started from an input', () => {
+    const { root } = mount({ ...twoSteps() });
+    click(root, 'Edit step 1');
+    const row = root.querySelector('ol.steps > li') as HTMLElement;
+
+    (row.querySelector('input') as HTMLElement).dispatchEvent(new Event('pointerdown', { bubbles: true }));
+
+    expect(row.draggable).toBe(false);
+  });
+
+  it('shows a drop indicator while over a row', () => {
+    const { root } = mount(twoSteps());
+    const rows = root.querySelectorAll('ol.steps > li');
+    rows[0].dispatchEvent(new Event('dragstart', { bubbles: true }));
+
+    rows[1].dispatchEvent(Object.assign(new Event('dragover', { bubbles: true, cancelable: true }), { clientY: 0 }));
+
+    expect(rows[1].classList.contains('drop-before')).toBe(true);
+  });
+
+  it('moves the step and marks it settled on drop', () => {
+    const { root, b } = mount(twoSteps());
+
+    dragged(root, 0, 1, 1e6);
+
+    expect([b.get().steps.map((s) => s.team), root.querySelectorAll('ol.steps > li')[1].classList.contains('settle')]).toEqual([['B', 'A'], true]);
   });
 });

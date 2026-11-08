@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  addItem, addPool, addStep, formatTags, moveStep, newPreset, parseTags, removePool, removeStep,
+  addItem, addPool, addStep, dropIndex, formatTags, moveStep, newPreset, parseTags, removePool, removeStep,
   setPoolIconSize, setPoolScope, setTagImage, setTagging, updateItem, updateStep,
 } from '../src/builder/edit';
 import { validatePreset } from '../src/schema';
@@ -169,5 +169,19 @@ describe('setTagImage', () => {
     setTagImage(p, 'nato', 'https://x.test/n.png');
 
     expect(p.tagging.images).toBeUndefined();
+  });
+});
+
+describe('dropIndex', () => {
+  it('lands before the row when dragging up', () => {
+    expect(dropIndex(3, 1, false)).toBe(1);
+  });
+
+  it('lands after the row when dragging down', () => {
+    expect(dropIndex(0, 2, true)).toBe(2);
+  });
+
+  it('lands before the row when dragging down', () => {
+    expect(dropIndex(0, 2, false)).toBe(1);
   });
 });
