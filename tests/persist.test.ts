@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { newPreset } from '../src/builder/edit';
 import { applyPick, createState } from '../src/draft';
-import { canEditPreset, draftFromDoc, draftToDoc, presetFromDoc, presetToDoc, type PresetDoc } from '../src/persist/docs';
+import { canEditPreset, draftFromDoc, draftToDoc, isPresetExpired, PRESET_TTL_MS, presetFromDoc, presetToDoc, type PresetDoc } from '../src/persist/docs';
 import { loadPreset, savePreset, type PresetStore, type Session } from '../src/persist/presets';
 import { makePreset, started, step } from './fixtures';
 
@@ -41,6 +41,16 @@ describe('preset documents', () => {
     const doc = presetToDoc(newPreset(), 'owner', 1);
 
     expect([canEditPreset(doc, 'owner'), canEditPreset(doc, 'other'), canEditPreset(doc, null)]).toEqual([true, false, false]);
+  });
+
+  it('expires 6 months after the last save, not after creation', () => {
+    const doc = presetToDoc(newPreset(), 'owner', 1000, 0);
+
+    expect([isPresetExpired(doc, 1000 + PRESET_TTL_MS - 1), isPresetExpired(doc, 1000 + PRESET_TTL_MS), isPresetExpired(doc, PRESET_TTL_MS)]).toEqual([false, true, false]);
+  });
+
+  it('keeps presets for 183 days', () => {
+    expect(PRESET_TTL_MS).toBe(183 * 24 * 60 * 60 * 1000);
   });
 });
 
@@ -97,11 +107,35 @@ describe('preset store use cases', () => {
     const p = newPreset();
     await savePreset(store, session('u1'), p);
 
-    expect(await loadPreset(store, 'new-id')).toEqual({ ok: true, value: p });
+    expect(await loadPreset(store, 'new-id', () => 1000)).toEqual({ ok: true, value: p });
   });
 
   it('reports a missing preset', async () => {
     expect((await loadPreset(memoryStore(), 'nope')).ok).toBe(false);
+  });
+
+  it('refuses a preset not saved for 6 months', async () => {
+    const store = memoryStore();
+    await savePreset(store, session('u1', 1000), newPreset());
+
+    const r = await loadPreset(store, 'new-id', () => 1000 + PRESET_TTL_MS);
+
+    expect(r).toEqual({ ok: false, error: expect.stringContaining('expired') });
+  });
+
+  it('serves a preset until the day it expires', async () => {
+    const store = memoryStore();
+    await savePreset(store, session('u1', 1000), newPreset());
+
+    expect((await loadPreset(store, 'new-id', () => 1000 + PRESET_TTL_MS - 1)).ok).toBe(true);
+  });
+
+  it('renews the expiry when the owner saves again', async () => {
+    const store = memoryStore();
+    await savePreset(store, session('u1', 1000), newPreset());
+    await savePreset(store, session('u1', 1000 + PRESET_TTL_MS - 1), newPreset(), 'new-id');
+
+    expect((await loadPreset(store, 'new-id', () => 1000 + PRESET_TTL_MS)).ok).toBe(true);
   });
 });
 

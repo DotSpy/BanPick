@@ -30,7 +30,8 @@ const waitFor = async (cond: () => boolean) => {
 };
 
 describe('firestorePresetStore against the emulator', () => {
-  const doc: PresetDoc = { preset: '{"x":1}', ownerUid: 'owner', createdAt: 1, updatedAt: 1 };
+  const now = Date.now();
+  const doc: PresetDoc = { preset: '{"x":1}', ownerUid: 'owner', createdAt: now, updatedAt: now };
 
   it('returns null for a missing preset', async () => {
     const store = firestorePresetStore(dbFor('owner'));

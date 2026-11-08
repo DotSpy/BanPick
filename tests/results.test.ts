@@ -44,6 +44,12 @@ describe('draftResults', () => {
     expect(r.teams[0].chosen).toBe('nato');
   });
 
+  it('keeps the item id on every step so the image can draw its icon', () => {
+    const r = draftResults(finished());
+
+    expect(r.steps.map((s) => [s.action, s.id, s.label])).toEqual([['choose', 'nato', 'nato'], ['ban', 'map-1', 'map-1'], ['pick', 'map-2', 'map-2'], ['pick', 'cav', 'cav'], ['pick', 'gd', 'gd']]);
+  });
+
   it('measures the duration from start to finish', () => {
     const s = finished(372000);
     s.startedAt = 0;

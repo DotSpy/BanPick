@@ -38,13 +38,43 @@ const draftingDraft = (over: object = {}) => ({
 const draftRef = (db: Db) => doc(db, 'drafts/r');
 
 describe('rules: presets', () => {
-  const presetDoc = (over: object = {}) => ({ preset: '{}', ownerUid: 'owner', createdAt: 1, updatedAt: 1, ...over });
+  const now = Date.now();
+  const sixMonths = 183 * 24 * 60 * 60 * 1000;
+  const presetDoc = (over: object = {}) => ({ preset: '{}', ownerUid: 'owner', createdAt: now, updatedAt: now, ...over });
   const ref = (db: Db) => doc(db, 'presets/p1');
 
   it('lets a signed-in user read a preset by id', async () => {
     await seed('presets/p1', presetDoc());
 
     await assertSucceeds(getDoc(ref(as('anyone'))));
+  });
+
+  it('still serves a preset saved just under 6 months ago', async () => {
+    await seed('presets/p1', presetDoc({ updatedAt: now - sixMonths + 60_000 }));
+
+    await assertSucceeds(getDoc(ref(as('anyone'))));
+  });
+
+  it('refuses reading a preset not saved for 6 months, even for the owner', async () => {
+    await seed('presets/p1', presetDoc({ updatedAt: now - sixMonths }));
+
+    await assertFails(getDoc(ref(as('owner'))));
+  });
+
+  it('refuses a preset whose updatedAt is missing or not a number', async () => {
+    await seed('presets/p1', { preset: '{}', ownerUid: 'owner', createdAt: now, updatedAt: 'later' });
+
+    await assertFails(getDoc(ref(as('owner'))));
+  });
+
+  it('refuses creating a preset with updatedAt in the future', async () => {
+    await assertFails(setDoc(ref(as('owner')), presetDoc({ updatedAt: now + 60 * 60 * 1000 })));
+  });
+
+  it('refuses an update that moves updatedAt into the future', async () => {
+    await seed('presets/p1', presetDoc());
+
+    await assertFails(updateDoc(ref(as('owner')), { preset: '{"v":2}', updatedAt: now + 60 * 60 * 1000 }));
   });
 
   it('refuses reads when signed out', async () => {

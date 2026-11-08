@@ -1,6 +1,12 @@
 # BanPick
 
+[![Support me on Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20me-ff5e5b?logo=ko-fi&logoColor=white)](https://ko-fi.com/dotspy)
+
 A generic pick/ban draft platform. A draft is described entirely by a **preset** (JSON). The WARNO draft is one built-in preset; there is no game-specific engine code.
+
+## Support
+
+BanPick is free and open. If it saves your community some drafting headaches, you can [support me on Ko-fi](https://ko-fi.com/dotspy).
 
 ## Modules
 
@@ -62,10 +68,10 @@ Blind picks are hidden **in the UI only**. The draft state, including blind choi
 
 ## Persistence and permissions
 
-- `presets/{id}`: preset JSON string plus `ownerUid`, `createdAt`, `updatedAt`. Read by id only (no list queries). Only the creator (anonymous uid) can update; this is enforced in `firestore.rules` and in `savePreset`. Presets cannot be deleted.
+- `presets/{id}`: preset JSON string plus `ownerUid`, `createdAt`, `updatedAt`. Read by id only (no list queries). Only the creator (anonymous uid) can update; this is enforced in `firestore.rules` and in `savePreset`. Presets cannot be deleted. **Presets expire 6 months (183 days) after their last save**: `loadPreset` reports them as expired and `firestore.rules` refuses to serve them (`PRESET_TTL_MS` in `src/persist/docs.ts` and the `fresh()` helper in the rules hold the same number). Saving again renews the clock; `updatedAt` may not be set more than 5 minutes into the future. Expired documents stay in the database (there is no backend to delete them), they are only unreadable.
 - `drafts/{id}`: seats are bound to the uid that claimed them. Rules check seat ownership and phase transitions; move legality is enforced by the client engine and re-verified on load. preset, 	urnTeams and recorded history are top-level fields so rules can pin them: they cannot change after creation, history grows by at most one entry per write (for the turn now playing, by that team's seat, or an auto entry once the deadline has passed), 	urnIndex only moves forward and exactly when an entry is added, and a seat sets only its own confirm flag. **Not enforceable in rules** (the state blob is opaque JSON): pool membership, tag restrictions, blind/availability legality, the other fields inside state (ready flags, selection, connected), deadline values, strict one-step turn advance (exhausted pools legally skip turns), preset name/step-count limits and tagging image links (the preset is one string; only item image links are checked to be https). Clients detect tampering by replaying history, they cannot prevent it. Spectators cannot advance overdue timers.
 - Presets can also be shared without a database through the compressed link produced by the builder (`#<code>`).
-- The Firestore **security rules are tested against the emulator**: `npm run test:rules` (70 rules tests plus 7 adapter tests in `rules-tests/`). It needs a **HotSpot JDK 21+ on PATH or `JAVA_HOME`** (for example Corretto or Temurin). OpenJ9/Semeru does not work and cannot be fixed from this repo: the emulator (v1.22.0) sizes objects in `SizeOf.isCompressedOops`, which calls `HotSpotDiagnosticMXBean.getVMOption("UseCompressedOops")`. OpenJ9 throws `IllegalArgumentException: OpenJ9 doesn't support the API`, so loading rules returns a 500 (see `firestore-debug.log`). Checked on Semeru 21.0.3 (OpenJ9 0.44); setting `-XX:±UseCompressedOops` via `JAVA_TOOL_OPTIONS` does not help. Supported: Corretto, Temurin or any other HotSpot JDK (verified on Corretto 25). The first run downloads the emulator jar. The rules tests are separate from `npm test`, which needs no Java. The Firestore adapters (`src/persist/firestore.ts`, `src/room/firestore.ts`) are now covered by emulator tests (`rules-tests/adapters.test.ts`); only a real Firebase project and anonymous auth remain untested (blocked: no project of our own is configured; see below).
+- The Firestore **security rules are tested against the emulator**: `npm run test:rules` (75 rules tests plus 7 adapter tests in `rules-tests/`). It needs a **HotSpot JDK 21+ on PATH or `JAVA_HOME`** (for example Corretto or Temurin). OpenJ9/Semeru does not work and cannot be fixed from this repo: the emulator (v1.22.0) sizes objects in `SizeOf.isCompressedOops`, which calls `HotSpotDiagnosticMXBean.getVMOption("UseCompressedOops")`. OpenJ9 throws `IllegalArgumentException: OpenJ9 doesn't support the API`, so loading rules returns a 500 (see `firestore-debug.log`). Checked on Semeru 21.0.3 (OpenJ9 0.44); setting `-XX:±UseCompressedOops` via `JAVA_TOOL_OPTIONS` does not help. Supported: Corretto, Temurin or any other HotSpot JDK (verified on Corretto 25). The first run downloads the emulator jar. The rules tests are separate from `npm test`, which needs no Java. The Firestore adapters (`src/persist/firestore.ts`, `src/room/firestore.ts`) are now covered by emulator tests (`rules-tests/adapters.test.ts`); only a real Firebase project and anonymous auth remain untested (blocked: no project of our own is configured; see below).
 
 ### Firestore free-tier (Spark) quotas
 
@@ -97,17 +103,24 @@ Known limits: captains are trusted peers, so a seat owner can forge `deadline`, 
 
 The adapters and anonymous sign-in (src/firebase.ts) have only run against the emulator. To verify: create a dedicated Firebase project, enable Anonymous sign-in, set the VITE_FIREBASE_* variables, deploy irestore.rules, and run a two-browser draft. Do not reuse another app's project, since deploying the rules replaces its existing ones.
 
-## Not in the MVP
-
-No undo/redo, no series (multi-game) logic, no preset deletion, no server-side hiding of blind picks.
-
 ## Development
 
 ```
 npm install
 npm test        # vitest (unit and view tests, no Java needed)
-npx vite build   # production build
+npm run build   # production build (vite build)
 npm run test:rules  # Firestore rules against the emulator (needs a HotSpot JDK 21+)
 npx tsc --noEmit
 npx vite        # builder UI
 ```
+
+## Deploying to GitHub Pages
+
+`.github/workflows/pages.yml` builds and deploys the site on every push to `master` (or by hand from the Actions tab). The live URL is <https://dotspy.github.io/BanPick/>. One-time setup in the repository settings:
+
+1. **Settings > Pages**: set **Source** to **GitHub Actions**.
+2. **Settings > Secrets and variables > Actions > Variables**: add `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID` and `VITE_FIREBASE_APP_ID` with the web-app values from the Firebase console. They identify the project and are not secrets, so repository variables are fine. Without them the site builds and the builder works, but rooms and saved presets show "Firebase is not configured".
+3. In the Firebase console, **Authentication > Settings > Authorized domains**: add `dotspy.github.io`, otherwise anonymous sign-in is refused from the deployed site.
+4. Push to `master` (or run the workflow). The first run creates the `github-pages` environment.
+
+The build sets `BASE_PATH=/BanPick/` (see `vite.config.ts`) so assets load under the project path; routing uses the URL hash, so no 404 fallback is needed. Serving from a custom domain means setting `BASE_PATH` to `/` in the workflow.

@@ -15,16 +15,28 @@ service cloud.firestore {
     }
 
     match /presets/{id} {
-      allow get: if request.auth != null;
+      // Presets expire 6 months (183 days) after their last save; same number as PRESET_TTL_MS in src/persist/docs.ts.
+      function fresh(d) {
+        return d.updatedAt is number && request.time.toMillis() - d.updatedAt < 183 * 24 * 60 * 60 * 1000;
+      }
+      // updatedAt comes from the client clock; allow 5 minutes of skew, but not a timestamp that would never expire.
+      function stampOk(d) {
+        return d.updatedAt is number && d.updatedAt <= request.time.toMillis() + 5 * 60 * 1000;
+      }
+
+      // A missing document has no resource; the adapter reads it and reports "not found".
+      allow get: if request.auth != null && (resource == null || fresh(resource.data));
       allow list: if false;
       allow create: if request.auth != null
         && request.resource.data.ownerUid == request.auth.uid
         && request.resource.data.keys().hasOnly(['preset', 'ownerUid', 'createdAt', 'updatedAt'])
+        && stampOk(request.resource.data)
         && presetOk(request.resource.data.preset);
       allow update: if request.auth != null
         && resource.data.ownerUid == request.auth.uid
         && request.resource.data.ownerUid == resource.data.ownerUid
         && request.resource.data.createdAt == resource.data.createdAt
+        && stampOk(request.resource.data)
         && presetOk(request.resource.data.preset);
       allow delete: if false;
     }
