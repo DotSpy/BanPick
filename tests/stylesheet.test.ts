@@ -1,4 +1,4 @@
-﻿import { readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { build } from 'vite';
 import { describe, expect, it } from 'vitest';
 
@@ -87,5 +87,13 @@ describe('tab row', () => {
     const css = read('../src/styles.css');
 
     expect([css.includes('.tablist::-webkit-scrollbar { display: none'), /\.tablist \{[^}]*scrollbar-width: none/.test(css), /\.tablist \{[^}]*overflow-y: hidden/.test(css)]).toEqual([true, true, true]);
+  });
+});
+
+describe('builder side panel', () => {
+  it('sticks 16px from the top and scrolls inside the viewport', () => {
+    const css = read('../src/styles.css');
+
+    expect(css).toMatch(/\.builder-side \{ position: sticky; top: 16px; max-height: calc\(100vh - 32px\); overflow: auto/);
   });
 });

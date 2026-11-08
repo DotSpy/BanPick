@@ -13,6 +13,9 @@ const mount = () => {
 const clickButton = (root: HTMLElement, label: string) =>
   [...root.querySelectorAll('button')].find((b) => b.textContent === label)!.click();
 
+const openStep = (root: HTMLElement, n = 1) => (root.querySelector(`[aria-label="Edit step ${n}"]`) as HTMLElement).click();
+const openPool = (root: HTMLElement, name = 'items') => (root.querySelector(`[aria-label="Expand pool ${name}"]`) as HTMLElement).click();
+
 describe('builder view', () => {
   it('renders the draft order preview', () => {
     const { root } = mount();
@@ -22,6 +25,7 @@ describe('builder view', () => {
 
   it('labels the preset name and step timer visibly and titles the JSON section', () => {
     const { root } = mount();
+    openStep(root);
 
     const labels = [...root.querySelectorAll('label')].map((l) => l.textContent);
 
@@ -57,6 +61,7 @@ describe('builder view', () => {
     const root = document.createElement('div');
 
     mountBuilder(root, p);
+    openPool(root);
 
     expect(root.querySelector('img')?.getAttribute('src')).toBe('https://x.test/a.png');
   });
@@ -66,6 +71,7 @@ describe('builder view', () => {
     p.pools.items.items[0].image = 'https://x.test/a.png';
     const root = document.createElement('div');
     mountBuilder(root, p);
+    openPool(root);
 
     root.querySelector('img')!.dispatchEvent(new Event('error'));
 
@@ -203,6 +209,7 @@ describe('builder view', () => {
 
   it('limits count and timer to whole numbers, timer from 0 and count from 1', () => {
     const { root } = mount();
+    openStep(root);
 
     const [count, timer] = [...root.querySelectorAll('li input[type=number]')] as HTMLInputElement[];
 
@@ -211,6 +218,7 @@ describe('builder view', () => {
 
   it('explains that a timer of 0 means no timer', () => {
     const { root } = mount();
+    openStep(root);
 
     expect(root.querySelector('li input[type=number][aria-label*="0 = no timer"]')).not.toBeNull();
   });
@@ -241,8 +249,9 @@ describe('pool icon size', () => {
     const root = document.createElement('div');
 
     mountBuilder(root, p);
+    openPool(root);
 
-    expect([(root.querySelector('[aria-label="items icon size"]') as HTMLSelectElement).value, root.querySelector('.row img')!.classList.contains('icon-large')]).toEqual(['large', true]);
+    expect([(root.querySelector('[aria-label="items icon size"]') as HTMLSelectElement).value, root.querySelector('.row img')!.classList.contains('icon-small')]).toEqual(['large', true]);
   });
 
   it('saves the chosen size into the preset', async () => {
@@ -321,8 +330,9 @@ describe('step row labels', () => {
     const root = document.createElement('div');
 
     mountBuilder(root, p);
+    openStep(root);
 
-    expect([...root.querySelectorAll('ol li.row.labelled > label.mini')].map((l) => l.firstChild!.textContent)).toEqual(['Team', 'Action', 'Pool', 'Count', 'Timer (s)', 'Blind', 'Random']);
+    expect([...root.querySelectorAll('.step-edit > label.mini')].map((l) => l.firstChild!.textContent)).toEqual(['Team', 'Action', 'Pool', 'Count', 'Timer (s)', 'Blind', 'Random']);
   });
 
   it('leaves no unlabelled select in a step row', () => {
@@ -378,11 +388,12 @@ describe('builder layout and tools', () => {
   it('labels the pool selects and shows the item column headers', () => {
     const { root } = mountWith();
 
-    expect([[...root.querySelectorAll('.pool-head label')].map((l) => l.firstChild!.textContent), [...root.querySelectorAll('.item-head span')].map((s) => s.textContent)]).toEqual([['Pool id', 'Scope', 'Icon size'], ['ID', 'Name', 'Tags', 'Image URL']]);
+    expect([[...root.querySelectorAll('.pool-head .chip-select')].map((l) => l.firstChild!.textContent), root.querySelector('.pool-head .pool-toggle')!.textContent]).toEqual([['Scope:', 'Size:'], '\u25b8items \u00b7 2 items']);
   });
 
   it('renames a pool from its id field', async () => {
     const { root, b } = mountWith();
+    openPool(root);
     const id = byLabel(root, 'items pool id') as HTMLInputElement;
 
     id.value = 'maps';
@@ -405,6 +416,7 @@ describe('builder layout and tools', () => {
 
   it('numbers step rows and names teams in the team select', () => {
     const { root } = mountWith();
+    openStep(root);
 
     expect([root.querySelector('ol.steps .num')!.textContent, [...byLabel(root, 'Step 1 team').querySelectorAll('option')].map((o) => o.textContent)]).toEqual(['1', ['Team A', 'Team B']]);
   });
@@ -506,6 +518,7 @@ describe('builder layout and tools', () => {
 
   it('asks for a numeric keypad on number fields', () => {
     const { root } = mountWith();
+    openStep(root);
 
     expect((byLabel(root, 'Step 1 count') as HTMLInputElement).inputMode).toBe('numeric');
   });

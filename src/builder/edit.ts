@@ -80,6 +80,42 @@ export function addItems(p: Preset, pool: string, text: string): Preset {
   });
 }
 
+/** Splits one CSV line; a field wrapped in double quotes may contain commas. */
+const csvFields = (line: string) => {
+  const out: string[] = [];
+  let cur = '';
+  let quoted = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (quoted && ch === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+    else if (ch === '"') quoted = !quoted;
+    else if (ch === ',' && !quoted) { out.push(cur.trim()); cur = ''; }
+    else cur += ch;
+  }
+  return [...out, cur.trim()];
+};
+
+/** Items from a JSON array of items, or CSV lines `id,name,"tag=value, tag=value",image` (the first three columns are enough). */
+export function parseItemList(text: string): Item[] {
+  const body = text.trim();
+  if (body.startsWith('[')) {
+    return (JSON.parse(body) as Item[]).map(({ id, name, tags, image }) => ({ id: String(id), name: String(name), ...(tags ? { tags } : {}), ...(image ? { image } : {}) }));
+  }
+  return body.split(/\r?\n/).filter((l) => l.trim()).map((line) => {
+    const [id, name, tags, image] = csvFields(line);
+    return { id, name: name || id, ...(tags ? { tags: parseTags(tags) } : {}), ...(image ? { image } : {}) };
+  });
+}
+
+/** Appends imported items; ids already in the pool are skipped so the pool stays valid. */
+export function importItems(p: Preset, pool: string, text: string): Preset {
+  const incoming = parseItemList(text);
+  return edit(p, (c) => {
+    const items = c.pools[pool].items;
+    const taken = new Set(items.map((i) => i.id));
+    for (const item of incoming) if (item.id && !taken.has(item.id)) { taken.add(item.id); items.push(item); }
+  });
+}
 export function setPoolScope(p: Preset, name: string, scope: NonNullable<Preset['pools'][string]['scope']>): Preset {
   return edit(p, (c) => void (c.pools[name].scope = scope));
 }
@@ -182,5 +218,24 @@ export function moveStep(p: Preset, from: number, to: number): Preset {
       if (from > to && old >= to && old < from) return old + 1;
       return old;
     });
+  });
+}
+
+/** Appends 
+ copies of the last step. */
+export function repeatLastStep(p: Preset, n: number): Preset {
+  if (!p.steps.length) return p;
+  return edit(p, (c) => {
+    for (let i = 0; i < n; i++) c.steps.push(structuredClone(c.steps[c.steps.length - 1]));
+  });
+}
+
+/** Appends a copy of the last step with the other team. */
+export function mirrorLastStep(p: Preset): Preset {
+  if (!p.steps.length) return p;
+  return edit(p, (c) => {
+    const last = structuredClone(c.steps[c.steps.length - 1]);
+    last.team = last.team === 'A' ? 'B' : 'A';
+    c.steps.push(last);
   });
 }

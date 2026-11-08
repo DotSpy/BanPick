@@ -9,6 +9,7 @@ import type { Link } from '../route';
 import { stepWarnings } from './check';
 import { orderLane } from './order';
 import { decodePreset, encodePreset } from './share';
+import { poolSummary, stepSummary } from './summary';
 
 export type SaveResult = { ok: true; links: Link[] } | { ok: false; error: string };
 
@@ -41,11 +42,16 @@ const select = (label: string, value: string, options: Option[], onChange: (v: s
 
 const field = (label: string, control: HTMLElement) => h('label', { className: 'mini' }, label, control);
 
+/** A compact "Label: value ▾" control. */
+const chipSelect = (label: string, aria: string, value: string, options: Option[], onChange: (v: string) => void) =>
+  h('label', { className: 'chip-select' }, h('span', { textContent: `${label}:` }), select(aria, value, options, onChange));
+
 const iconButton = (name: GlyphName, label: string, onClick: () => void) =>
   h('button', { type: 'button', className: 'icon ghost', ariaLabel: label, title: label, onclick: onClick }, glyph(name));
 
 const FOCUSABLE = 'input, select, textarea, button';
 const TEAMS = [{ value: 'A', label: 'Team A' }, { value: 'B', label: 'Team B' }];
+const PAGE = 50;
 
 /** Mounts the builder into `root`. `onSave` receives only validated presets. */
 export function mountBuilder(root: HTMLElement, initial: Preset, onSave?: (p: Preset) => Promise<SaveResult>, templates: Template[] = []) {
@@ -59,6 +65,11 @@ export function mountBuilder(root: HTMLElement, initial: Preset, onSave?: (p: Pr
   let rawEditing = false;
   let bulkFor: string | null = null;
   let bulkText = '';
+  let openPool: string | null = null;
+  let editItem: { pool: string; index: number } | null = null;
+  let openStep: number | null = null;
+  const filters: Record<string, string> = {};
+  const limits: Record<string, number> = {};
   const quick = { action: 'ban' as 'ban' | 'pick', pool: '', count: 4 };
   const content = h('div');
   const status = h('p', { className: 'status', role: 'status' });
@@ -77,42 +88,64 @@ export function mountBuilder(root: HTMLElement, initial: Preset, onSave?: (p: Pr
     }
     render();
   };
+  /** Step operations shift indexes, so the open step is closed. */
+  const stepOp = (next: Preset) => {
+    openStep = null;
+    update(next);
+  };
+
+  const stepRowAt = (index: number) => content.querySelector(`ol.steps > li:nth-child(${index + 1})`) as HTMLElement | null;
 
   const showStep = (index: number) => {
-    const row = content.querySelector(`ol.steps > li:nth-child(${index + 1})`) as HTMLElement | null;
+    const row = stepRowAt(index);
     row?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
     row?.classList.add('hl');
     setTimeout(() => row?.classList.remove('hl'), 1500);
   };
 
-  const stepRow = (s: Step, i: number, warnings: string[]) => {
+  let hovered: HTMLElement | null = null;
+  const hoverStep = (index: number | null) => {
+    hovered?.classList.remove('hover');
+    hovered = index === null ? null : stepRowAt(index);
+    hovered?.classList.add('hover');
+  };
+
+  const stepEdit = (s: Step, i: number) => {
     const poolNames = Object.keys(preset.pools);
     const patch = (p: Partial<Step>) => update(E.updateStep(preset, i, p));
     const toggle = (label: string, checked: boolean, key: 'blind' | 'random', aria?: string) =>
       h('label', { className: 'mini' }, label, h('input', { type: 'checkbox', checked, ...(aria ? { ariaLabel: aria } : {}), onchange: (e: Event) => { const c = (e.target as HTMLInputElement).checked; later(() => patch({ [key]: c })); } }));
-    return h(
-      'li', {
-        className: 'row labelled',
-        ondragover: (e: Event) => e.preventDefault(),
-        ondrop: (e: Event) => {
-          e.preventDefault();
-          const from = Number((e as DragEvent).dataTransfer?.getData('text/plain'));
-          if (Number.isInteger(from)) update(E.moveStep(preset, from, i));
-        },
-      },
-      h('span', { className: 'num', textContent: String(i + 1) }),
-      h('span', { className: 'handle', textContent: '\u22ee\u22ee', title: 'Drag to reorder', draggable: true, ondragstart: (e: Event) => (e as DragEvent).dataTransfer?.setData('text/plain', String(i)) }),
+    return h('div', { className: 'step-edit' },
       field('Team', select(`Step ${i + 1} team`, s.team, TEAMS, (v) => patch({ team: v as Step['team'] }))),
       field('Action', select(`Step ${i + 1} action`, s.action, ['ban', 'pick', 'choose'], (v) => patch({ action: v as Step['action'] }))),
       s.action === 'choose' ? '' : field('Pool', select(`Step ${i + 1} pool`, s.pool ?? poolNames[0], poolNames, (v) => patch({ pool: v }))),
       field('Count', numberInput(`Step ${i + 1} count`, s.count ?? 1, 1, (v) => patch({ count: v }))),
       field('Timer (s)', numberInput(`Step ${i + 1} timer in seconds (0 = no timer)`, s.timer ?? 0, 0, (v) => patch({ timer: v }))),
       s.action === 'pick' ? toggle('Blind', !!s.blind, 'blind') : '',
-      s.action === 'choose' ? '' : toggle('Random', !!s.random, 'random', `Step ${i + 1} allows random`),
-      btn('\u2191', () => update(E.moveStep(preset, i, i - 1)), { className: 'icon ghost', ariaLabel: `Move step ${i + 1} up` }),
-      btn('\u2193', () => update(E.moveStep(preset, i, i + 1)), { className: 'icon ghost', ariaLabel: `Move step ${i + 1} down` }),
-      iconButton('copy', `Duplicate step ${i + 1}`, () => update(E.duplicateStep(preset, i))),
-      btn('\u2715', () => update(E.removeStep(preset, i)), { className: 'icon ghost', ariaLabel: `Remove step ${i + 1}` }),
+      s.action === 'choose' ? '' : toggle('Random', !!s.random, 'random', `Step ${i + 1} allows random`));
+  };
+
+  const stepRow = (s: Step, i: number, warnings: string[]) => {
+    const open = openStep === i;
+    return h(
+      'li', {
+        className: 'row step',
+        ondragover: (e: Event) => e.preventDefault(),
+        ondrop: (e: Event) => {
+          e.preventDefault();
+          const from = Number((e as DragEvent).dataTransfer?.getData('text/plain'));
+          if (Number.isInteger(from)) stepOp(E.moveStep(preset, from, i));
+        },
+      },
+      h('div', { className: 'step-head' },
+        h('span', { className: 'num', textContent: String(i + 1) }),
+        h('span', { className: 'handle', textContent: '\u22ee\u22ee', title: 'Drag to reorder', draggable: true, ondragstart: (e: Event) => (e as DragEvent).dataTransfer?.setData('text/plain', String(i)) }),
+        h('button', { type: 'button', className: 'step-summary', ariaExpanded: String(open), ariaLabel: `Edit step ${i + 1}`, title: 'Click to edit', onclick: () => { openStep = open ? null : i; render(); } }, stepSummary(s, i)),
+        btn('\u2191', () => stepOp(E.moveStep(preset, i, i - 1)), { className: 'icon ghost', ariaLabel: `Move step ${i + 1} up` }),
+        btn('\u2193', () => stepOp(E.moveStep(preset, i, i + 1)), { className: 'icon ghost', ariaLabel: `Move step ${i + 1} down` }),
+        iconButton('copy', `Duplicate step ${i + 1}`, () => stepOp(E.duplicateStep(preset, i))),
+        btn('\u2715', () => stepOp(E.removeStep(preset, i)), { className: 'icon ghost', ariaLabel: `Remove step ${i + 1}` })),
+      open ? stepEdit(s, i) : '',
       warnings[i] ? h('p', { className: 'warn', role: 'note', textContent: warnings[i] }) : '',
     );
   };
@@ -124,45 +157,98 @@ export function mountBuilder(root: HTMLElement, initial: Preset, onSave?: (p: Pr
         btn('Add items', () => { const text = bulkText; bulkFor = null; bulkText = ''; update(E.addItems(preset, name, text)); }),
         btn('Cancel', () => { bulkFor = null; bulkText = ''; render(); }, { className: 'ghost' })));
 
+  const tagChips = (tags: Record<string, string> = {}) =>
+    h('span', { className: 'tags' }, ...Object.entries(tags).map(([k, v]) => h('span', { className: 'tag-chip', textContent: `${k}: ${v}` })));
+
+  const itemRow = (name: string, i: number) => {
+    const item = preset.pools[name].items[i];
+    const label = (what: string) => `${name} item ${i + 1} ${what}`;
+    if (editItem?.pool === name && editItem.index === i) {
+      return h('li', { className: 'row item editing' },
+        input(label('id'), item.id, (v) => update(E.updateItem(preset, name, i, { id: v }))),
+        input(label('name'), item.name, (v) => update(E.updateItem(preset, name, i, { name: v }))),
+        input(label('tags'), E.formatTags(item.tags), (v) => update(E.updateItem(preset, name, i, { tags: E.parseTags(v) })), { placeholder: 'tag=value, …' }),
+        input(label('image link'), item.image ?? '', (v) => update(E.updateItem(preset, name, i, { image: v })), { placeholder: 'Image URL https://…' }),
+        btn('Done', () => { editItem = null; render(); }, { className: 'ghost' }),
+        btn('\u2715', () => { editItem = null; update(E.removeItem(preset, name, i)); }, { className: 'icon ghost', ariaLabel: `Remove ${name} item ${i + 1}` }));
+    }
+    return h('li', { className: 'row item' },
+      h('button', { type: 'button', className: 'item-open', ariaLabel: `Edit ${name} item ${i + 1}`, title: 'Click to edit (id, name, tags, image link)', onclick: () => { editItem = { pool: name, index: i }; render(); } },
+        h('span', { className: 'thumb' }, itemIcon(item, item.name, 'small')),
+        h('span', { className: 'item-id', textContent: item.id }),
+        h('span', { className: 'item-name', textContent: item.name }),
+        tagChips(item.tags)),
+      btn('\u2715', () => { editItem = null; update(E.removeItem(preset, name, i)); }, { className: 'icon ghost', ariaLabel: `Remove ${name} item ${i + 1}` }));
+  };
+
+  const itemList = (name: string) => {
+    const q = (filters[name] ?? '').trim().toLowerCase();
+    const matches = preset.pools[name].items
+      .map((item, i) => ({ item, i }))
+      .filter(({ item }) => !q || `${item.id} ${item.name} ${E.formatTags(item.tags)}`.toLowerCase().includes(q));
+    const limit = limits[name] ?? PAGE;
+    return h('ul', { className: 'items-table' },
+      ...matches.slice(0, limit).map(({ i }) => itemRow(name, i)),
+      matches.length > limit ? h('li', {}, btn(`Show ${Math.min(PAGE, matches.length - limit)} more (${matches.length - limit} left)`, () => { limits[name] = limit + PAGE; render(); }, { className: 'ghost' })) : '',
+      !matches.length && q ? h('li', { className: 'hint', textContent: 'No items match.' }) : '');
+  };
+
+  const exportItems = (name: string) => void copyText(JSON.stringify(preset.pools[name].items, null, 2), `${name} items copied as JSON.`);
+
+  const importFile = async (name: string, file: File | undefined) => {
+    if (!file) return;
+    try {
+      update(E.importItems(preset, name, await file.text()));
+    } catch (e) {
+      say(`Could not import: ${(e as Error).message}`);
+    }
+  };
+
   const poolBlock = (name: string) => {
     const pool = preset.pools[name];
-    return h(
-      'section', { className: 'pool' },
-      h('div', { className: 'pool-head' },
-        field('Pool id', input(`${name} pool id`, name, (v) => update(E.renamePool(preset, name, v.trim())))),
-        field('Scope', select(`${name} scope`, pool.scope ?? 'global', ['global', 'shared', 'exclusive'], (v) => update(E.setPoolScope(preset, name, v as 'global')))),
-        field('Icon size', select(`${name} icon size`, pool.iconSize ?? 'medium', ['small', 'medium', 'large'], (v) => update(E.setPoolIconSize(preset, name, v as IconSize)))),
-        iconButton('trash', 'Remove pool', () => update(E.removePool(preset, name)))),
-      pool.items.length ? h('div', { className: 'item-head' }, ...['ID', 'Name', 'Tags', 'Image URL'].map((t) => h('span', { textContent: t }))) : '',
-      h(
-        'ul', {},
-        ...pool.items.map((item, i) =>
-          h(
-            'li', { className: 'row item' },
-            input(`${name} item ${i + 1} id`, item.id, (v) => update(E.updateItem(preset, name, i, { id: v }))),
-            input(`${name} item ${i + 1} name`, item.name, (v) => update(E.updateItem(preset, name, i, { name: v }))),
-            input(`${name} item ${i + 1} tags`, E.formatTags(item.tags), (v) => update(E.updateItem(preset, name, i, { tags: E.parseTags(v) })), { placeholder: 'tag=value, …' }),
-            input(`${name} item ${i + 1} image link`, item.image ?? '', (v) => update(E.updateItem(preset, name, i, { image: v })), { placeholder: 'https://…' }),
-            itemIcon(item, item.name, pool.iconSize),
-            btn('\u2715', () => update(E.removeItem(preset, name, i)), { className: 'icon ghost', ariaLabel: `Remove ${name} item ${i + 1}` }),
-          ),
-        ),
-      ),
+    const open = openPool === name;
+    const picker = h('input', { type: 'file', accept: '.json,.csv,.txt', hidden: true, ariaLabel: `Import ${name} items file`, onchange: (e: Event) => void importFile(name, (e.target as HTMLInputElement).files?.[0]) });
+    const filter = h('input', { type: 'search', className: 'filter', ariaLabel: `Filter ${name} items`, placeholder: 'Filter items…', value: filters[name] ?? '' });
+    filter.addEventListener('input', () => {
+      filters[name] = (filter as HTMLInputElement).value;
+      limits[name] = PAGE;
+      body.querySelector('ul.items-table')?.replaceWith(itemList(name));
+    });
+    const body = h('div', { className: 'pool-body' },
+      h('div', { className: 'pool-tools' },
+        field('Pool id', input(`${name} pool id`, name, (v) => { const to = v.trim(); if (openPool === name) openPool = to; editItem = null; update(E.renamePool(preset, name, to)); })),
+        filter),
+      itemList(name),
       h('div', { className: 'actions' },
-        btn('Add item', () => update(E.addItem(preset, name, { id: `item-${pool.items.length + 1}`, name: `Item ${pool.items.length + 1}` })), { className: 'secondary' }),
-        btn('Paste list', () => { bulkFor = bulkFor === name ? null : name; render(); }, { className: 'ghost', ariaExpanded: String(bulkFor === name) })),
-      bulkFor === name ? bulkBlock(name) : '',
-    );
+        btn('Add item', () => { editItem = { pool: name, index: pool.items.length }; filters[name] = ''; limits[name] = pool.items.length + 1; update(E.addItem(preset, name, { id: `item-${pool.items.length + 1}`, name: `Item ${pool.items.length + 1}` })); }, { className: 'secondary' })),
+      bulkFor === name ? bulkBlock(name) : '');
+    return h(
+      'section', { className: `pool${open ? ' open' : ''}` },
+      h('div', { className: 'pool-head' },
+        h('button', { type: 'button', className: 'pool-toggle', ariaExpanded: String(open), ariaLabel: `${open ? 'Collapse' : 'Expand'} pool ${name}`, onclick: () => { openPool = open ? null : name; editItem = null; render(); } },
+          h('span', { className: 'chev', textContent: open ? '\u25be' : '\u25b8' }), poolSummary(name, pool)),
+        chipSelect('Scope', `${name} scope`, pool.scope ?? 'global', ['global', 'shared', 'exclusive'], (v) => update(E.setPoolScope(preset, name, v as 'global'))),
+        chipSelect('Size', `${name} icon size`, pool.iconSize ?? 'medium', ['small', 'medium', 'large'], (v) => update(E.setPoolIconSize(preset, name, v as IconSize))),
+        h('span', { className: 'pool-actions' },
+          btn('Paste list', () => { openPool = name; bulkFor = bulkFor === name ? null : name; render(); }, { className: 'secondary', ariaExpanded: String(bulkFor === name), title: 'Add many items at once, one per line' }),
+          btn('Import', () => (picker as HTMLInputElement).click(), { className: 'ghost', title: 'Import items from a CSV (id,name,"tag=value, …",image) or JSON file' }),
+          picker,
+          btn('Export', () => exportItems(name), { className: 'ghost', title: 'Copy the items as JSON' }),
+          iconButton('trash', 'Remove pool', () => { if (openPool === name) openPool = null; update(E.removePool(preset, name)); }))),
+      open ? body : '');
   };
 
   const quickFill = () => {
     const pools = Object.keys(preset.pools);
     const pool = pools.includes(quick.pool) ? quick.pool : pools[0];
+    const none = !preset.steps.length;
     return h('div', { className: 'quick' },
       field('Quick fill', select('Quick fill action', quick.action, ['ban', 'pick'], (v) => (quick.action = v as 'ban' | 'pick'))),
       field('Pool', select('Quick fill pool', pool, pools, (v) => (quick.pool = v))),
       field('Steps', numberInput('Quick fill steps', quick.count, 1, (v) => (quick.count = Math.max(1, Math.floor(v) || 1)))),
-      btn('Alternate A/B', () => update(E.alternateSteps(preset, quick.action, pool, quick.count)), { className: 'secondary', title: 'Add the steps, alternating Team A and Team B' }));
+      btn('Alternate A/B', () => stepOp(E.alternateSteps(preset, quick.action, pool, quick.count)), { className: 'secondary', title: 'Add the steps, alternating Team A and Team B' }),
+      btn('Mirror', () => stepOp(E.mirrorLastStep(preset)), { className: 'secondary', disabled: none, title: 'Add a copy of the last step with the teams swapped' }),
+      btn('Repeat \u00d7N', () => stepOp(E.repeatLastStep(preset, quick.count)), { className: 'secondary', disabled: none, title: 'Add N copies of the last step (N is the Steps field)' }));
   };
 
   const importJson = (text: string) => {
@@ -262,24 +348,25 @@ export function mountBuilder(root: HTMLElement, initial: Preset, onSave?: (p: Pr
     const result = validatePreset(preset);
     const errors = result.ok ? [] : result.errors;
     const warnings = stepWarnings(preset);
+    hovered = null;
     content.replaceChildren(
       h('div', { className: 'builder' },
         h('div', { className: 'builder-main' },
           h('h3', {}, 'General'),
           general(),
+          h('h3', {}, 'Steps'),
+          h('p', { className: 'hint', textContent: 'Click a step to edit it: team, action, pool, count, timer in seconds (0 = no timer) and random. Blind applies to picks only.' }),
+          quickFill(),
+          h('ol', { className: 'steps' }, ...preset.steps.map((s, i) => stepRow(s, i, warnings))),
+          btn('Add step', () => stepOp(E.addStep(preset)), { className: 'secondary' }),
           h('h3', {}, 'Pools'),
           ...Object.keys(preset.pools).map(poolBlock),
           btn('Add pool', () => update(E.addPool(preset, `pool-${Object.keys(preset.pools).length + 1}`)), { className: 'secondary' }),
           ...tagBlock(),
-          h('h3', {}, 'Steps'),
-          h('p', { className: 'hint', textContent: 'Each step: team, action, pool, count, timer in seconds (0 = no timer) and random. Blind applies to picks only.' }),
-          quickFill(),
-          h('ol', { className: 'steps' }, ...preset.steps.map((s, i) => stepRow(s, i, warnings))),
-          btn('Add step', () => update(E.addStep(preset)), { className: 'secondary' }),
           h('ul', { className: 'errors' }, ...errors.map((e) => h('li', { textContent: `${e.path || 'preset'}: ${e.message}` })))),
         h('aside', { className: 'builder-side' },
           h('h3', {}, 'Draft order'),
-          orderLane(preset, showStep),
+          orderLane(preset, showStep, hoverStep),
           rawJson())),
     );
     footer(result.ok ? result.preset : null, errors.length, JSON.stringify(preset) !== clean);
@@ -292,6 +379,7 @@ export function mountBuilder(root: HTMLElement, initial: Preset, onSave?: (p: Pr
     set: (next: Preset) => {
       clean = JSON.stringify(next);
       savedAt = savedLinks = null;
+      openPool = editItem = openStep = null;
       update(next);
     },
   };
