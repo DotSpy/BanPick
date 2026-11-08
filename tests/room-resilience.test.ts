@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { backoffDelay, isTransient, withRetry } from '../src/room/backoff';
 import { renameSeat } from '../src/room/claim';
-import { Room, type DraftStore } from '../src/room/room';
+import { Room, saveFailure, type DraftStore } from '../src/room/room';
 import { memoryDraftStore } from './memory-store';
 import { lobby, makePreset, step } from './fixtures';
 
@@ -163,5 +163,12 @@ describe('room resilience', () => {
     await room.setName('Ada');
 
     expect(room.notice).toMatch(/Could not save/);
+    expect(room.notice).toMatch(/unavailable/);
+  });
+
+  it('names a refused write instead of blaming the connection', () => {
+    expect(saveFailure({ code: 'permission-denied' })).toMatch(/permission-denied/);
+    expect(saveFailure({ code: 'permission-denied' })).not.toMatch(/connection/);
+    expect(saveFailure(new Error('x'))).toBe('Could not save your change. Check your connection and try again.');
   });
 });
