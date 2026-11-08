@@ -54,7 +54,8 @@ async function openBuilder(code: string) {
         return r.ok ? { ok: true, links: [roomLink(base(), shortId(), r.value)] } : { ok: false, error: r.error };
       }
     : undefined;
-  const builder = mountBuilder(builderEl, initial, onSave);
+  const templates = presetGroups.flatMap((g) => g.presets.map((p) => ({ label: p.preset.name, preset: p.preset })));
+  const builder = mountBuilder(builderEl, initial, onSave, templates);
   mountLauncher(launcherEl, { groups: presetGroups, base: base(), newId: shortId, onEditCopy: builder.set, builder: builderEl });
 }
 

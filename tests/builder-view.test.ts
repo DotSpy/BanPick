@@ -17,15 +17,16 @@ describe('builder view', () => {
   it('renders the draft order preview', () => {
     const { root } = mount();
 
-    expect(root.querySelectorAll('.timeline li')).toHaveLength(1);
+    expect(root.querySelectorAll('.order .chip')).toHaveLength(1);
   });
 
-  it('labels the preset name, step timer and JSON fields visibly', () => {
+  it('labels the preset name and step timer visibly and titles the JSON section', () => {
     const { root } = mount();
 
     const labels = [...root.querySelectorAll('label')].map((l) => l.textContent);
 
-    expect(labels).toEqual(expect.arrayContaining([expect.stringContaining('Preset name'), expect.stringContaining('Timer (s)'), expect.stringContaining('Preset JSON')]));
+    expect(labels).toEqual(expect.arrayContaining([expect.stringContaining('Preset name'), expect.stringContaining('Timer (s)')]));
+    expect(root.querySelector('summary')!.textContent).toBe('Preset JSON (advanced)');
   });
 
   it('adding a step grows the preview', () => {
@@ -33,7 +34,7 @@ describe('builder view', () => {
 
     clickButton(root, 'Add step');
 
-    expect(root.querySelectorAll('.timeline li')).toHaveLength(2);
+    expect(root.querySelectorAll('.order .chip')).toHaveLength(2);
   });
 
   it('shows no errors for a valid preset', () => {
@@ -45,7 +46,7 @@ describe('builder view', () => {
   it('shows validation errors when the preset becomes invalid', () => {
     const { root } = mount();
 
-    clickButton(root, 'Remove pool');
+    (root.querySelector('[aria-label="Remove pool"]') as HTMLElement).click();
 
     expect(root.querySelectorAll('.errors li').length).toBeGreaterThan(0);
   });
@@ -330,5 +331,174 @@ describe('step row labels', () => {
     mountBuilder(root, newPreset());
 
     expect(root.querySelectorAll('ol li.row.labelled > select')).toHaveLength(0);
+  });
+});
+
+describe('builder layout and tools', () => {
+  const mountWith = (p: Preset = newPreset(), onSave?: Parameters<typeof mountBuilder>[2], templates: Parameters<typeof mountBuilder>[3] = []) => {
+    const root = document.createElement('div');
+    const b = mountBuilder(root, p, onSave, templates);
+    return { root, b };
+  };
+  const byLabel = (root: HTMLElement, label: string) => root.querySelector(`[aria-label="${label}"]`) as HTMLElement;
+  const fire = async (el: HTMLElement, type = 'change') => { el.dispatchEvent(new Event(type)); await flush(); };
+
+  it('has no Preset builder heading and starts with General', () => {
+    const { root } = mountWith();
+
+    expect([...root.querySelectorAll('h2')].length + Number(root.querySelector('h3')!.textContent !== 'General')).toBe(0);
+  });
+
+  it('keeps the draft order and the raw JSON in the side panel', () => {
+    const { root } = mountWith();
+
+    expect([root.querySelector('.builder-side .order') !== null, root.querySelector('.builder-side details.json-adv') !== null]).toEqual([true, true]);
+  });
+
+  it('collapses the raw JSON by default', () => {
+    const { root } = mountWith();
+
+    expect((root.querySelector('details.json-adv') as HTMLDetailsElement).open).toBe(false);
+  });
+
+  it('keeps the raw JSON read-only until Edit raw is pressed', () => {
+    const { root } = mountWith();
+
+    clickButton(root, 'Edit raw');
+
+    expect([(root.querySelector('textarea.json') as HTMLTextAreaElement).readOnly, root.querySelector('.json-adv .warn')!.textContent]).toEqual([false, expect.stringContaining('replaces everything')]);
+  });
+
+  it('offers a pause switch with a tooltip', () => {
+    const { root } = mountWith();
+
+    expect(root.querySelector('label.switch')!.getAttribute('title')).toBe('Host confirms before each step');
+  });
+
+  it('labels the pool selects and shows the item column headers', () => {
+    const { root } = mountWith();
+
+    expect([[...root.querySelectorAll('.pool-head label')].map((l) => l.firstChild!.textContent), [...root.querySelectorAll('.item-head span')].map((s) => s.textContent)]).toEqual([['Pool id', 'Scope', 'Icon size'], ['ID', 'Name', 'Tags', 'Image URL']]);
+  });
+
+  it('renames a pool from its id field', async () => {
+    const { root, b } = mountWith();
+    const id = byLabel(root, 'items pool id') as HTMLInputElement;
+
+    id.value = 'maps';
+    await fire(id);
+
+    expect(Object.keys(b.get().pools)).toEqual(['maps']);
+  });
+
+  it('adds many items from a pasted list', async () => {
+    const { root, b } = mountWith();
+    clickButton(root, 'Paste list');
+    const area = byLabel(root, 'items items list') as HTMLTextAreaElement;
+    area.value = 'Fox\nOwl';
+    area.dispatchEvent(new Event('input'));
+
+    clickButton(root, 'Add items');
+
+    expect(b.get().pools.items.items.map((i) => i.id)).toEqual(['item-1', 'item-2', 'fox', 'owl']);
+  });
+
+  it('numbers step rows and names teams in the team select', () => {
+    const { root } = mountWith();
+
+    expect([root.querySelector('ol.steps .num')!.textContent, [...byLabel(root, 'Step 1 team').querySelectorAll('option')].map((o) => o.textContent)]).toEqual(['1', ['Team A', 'Team B']]);
+  });
+
+  it('duplicates a step', () => {
+    const { root, b } = mountWith();
+
+    byLabel(root, 'Duplicate step 1').click();
+
+    expect(b.get().steps).toHaveLength(2);
+  });
+
+  it('quick fill appends alternating steps', () => {
+    const { root, b } = mountWith();
+
+    clickButton(root, 'Alternate A/B');
+
+    expect(b.get().steps.slice(1).map((s) => s.team)).toEqual(['A', 'B', 'A', 'B']);
+  });
+
+  it('reorders steps when one is dropped on another', () => {
+    const { root, b } = mountWith({ ...newPreset(), steps: [{ team: 'A', action: 'ban', pool: 'items', count: 1 }, { team: 'B', action: 'pick', pool: 'items', count: 1 }] });
+    const drop = new Event('drop', { cancelable: true });
+    Object.assign(drop, { dataTransfer: { getData: () => '0' } });
+
+    root.querySelectorAll('ol.steps > li')[1].dispatchEvent(drop);
+
+    expect(b.get().steps.map((s) => s.action)).toEqual(['pick', 'ban']);
+  });
+
+  it('shows a warning on a step that needs more items than the pool has', () => {
+    const p = newPreset();
+    p.steps[0].count = 5;
+    const { root } = mountWith(p);
+
+    expect(root.querySelector('ol.steps .warn')!.textContent).toContain('has 2 items');
+  });
+
+  it('shows a lane per team in the draft order and a hint when empty', () => {
+    const empty = mountWith({ ...newPreset(), steps: [] }).root;
+
+    expect([mountWith().root.querySelectorAll('.order .lane').length, empty.querySelector('.order') === null, empty.querySelector('.builder-side .hint')!.textContent]).toEqual([2, true, 'Add steps to see the order.']);
+  });
+
+  it('highlights the step row when its chip is clicked', () => {
+    const { root } = mountWith();
+
+    (root.querySelector('.order .chip') as HTMLElement).click();
+
+    expect(root.querySelector('ol.steps > li')!.classList.contains('hl')).toBe(true);
+  });
+
+  it('explains why Save is off when the name is empty', () => {
+    const { root } = mountWith({ ...newPreset(), name: ' ' }, async () => ({ ok: true, links: [] }));
+
+    const save = [...root.querySelectorAll('button')].find((b) => b.textContent === 'Save')!;
+
+    expect([save.disabled, root.querySelector('.bar-note')!.textContent]).toEqual([true, 'Enter a preset name to save']);
+  });
+
+  it('tracks unsaved changes and offers Create room after saving', async () => {
+    const { root } = mountWith(newPreset(), async () => ({ ok: true, links: [{ label: 'Room', url: 'http://x/#r' }] }));
+    clickButton(root, 'Add step');
+    const unsaved = root.querySelector('.bar-note')!.textContent;
+
+    clickButton(root, 'Save');
+    await flush();
+
+    expect([unsaved, root.querySelector('.bar-note')!.textContent, [...root.querySelectorAll('.bar-actions button')].map((b) => b.textContent).includes('Create room')]).toEqual(['Unsaved changes', 'Saved just now', true]);
+  });
+
+  it('resets to the last loaded version', () => {
+    const { root, b } = mountWith();
+    clickButton(root, 'Add step');
+
+    clickButton(root, 'Reset');
+
+    expect(b.get().steps).toHaveLength(1);
+  });
+
+  it('loads a built-in preset from the footer', async () => {
+    const other = { ...newPreset(), name: 'Other' };
+    const { root, b } = mountWith(newPreset(), undefined, [{ label: 'Other', preset: other }]);
+    const sel = byLabel(root, 'Load from built-in') as HTMLSelectElement;
+
+    sel.value = '0';
+    await fire(sel);
+
+    expect(b.get().name).toBe('Other');
+  });
+
+  it('asks for a numeric keypad on number fields', () => {
+    const { root } = mountWith();
+
+    expect((byLabel(root, 'Step 1 count') as HTMLInputElement).inputMode).toBe('numeric');
   });
 });

@@ -64,3 +64,20 @@ describe('builder step row', () => {
     expect(css).toContain('.row.labelled > label.mini { flex: 1 1 6rem;');
   });
 });
+
+describe('builder layout', () => {
+  const css = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
+
+  it('splits the builder into two columns with a sticky side panel', () => {
+    expect(css).toMatch(/\.builder \{ display: grid; grid-template-columns: minmax\(0, 3fr\) minmax\(0, 2fr\)/);
+    expect(css).toMatch(/\.builder-side \{ position: sticky/);
+  });
+
+  it('hides native number spinners in the builder', () => {
+    expect(css).toContain('.builder input[type=\'number\']::-webkit-inner-spin-button');
+  });
+
+  it('gives item rows the 1fr 1.5fr 2fr 2fr column split', () => {
+    expect(css).toContain('grid-template-columns: 1fr 1.5fr 2fr 2fr auto auto');
+  });
+});

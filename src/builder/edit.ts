@@ -54,6 +54,32 @@ export function removePool(p: Preset, name: string): Preset {
   });
 }
 
+/** Renames a pool and the steps that use it; keeps pool order. Ignores empty or taken names. */
+export function renamePool(p: Preset, from: string, to: string): Preset {
+  if (!to || to === from || p.pools[to] || !p.pools[from]) return p;
+  return edit(p, (c) => {
+    c.pools = Object.fromEntries(Object.entries(c.pools).map(([k, v]) => [k === from ? to : k, v]));
+    for (const s of c.steps) if (s.pool === from) s.pool = to;
+  });
+}
+
+const slug = (s: string) => s.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'item';
+
+/** Adds one item per non-empty line; ids come from the names and stay unique within the pool. */
+export function addItems(p: Preset, pool: string, text: string): Preset {
+  return edit(p, (c) => {
+    const items = c.pools[pool].items;
+    const taken = new Set(items.map((i) => i.id));
+    for (const name of text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean)) {
+      const base = slug(name);
+      let id = base;
+      for (let n = 2; taken.has(id); n++) id = `${base}-${n}`;
+      taken.add(id);
+      items.push({ id, name });
+    }
+  });
+}
+
 export function setPoolScope(p: Preset, name: string, scope: NonNullable<Preset['pools'][string]['scope']>): Preset {
   return edit(p, (c) => void (c.pools[name].scope = scope));
 }
@@ -128,6 +154,20 @@ export function removeStep(p: Preset, index: number): Preset {
   return edit(p, (c) => {
     c.steps.splice(index, 1);
     remapReveals(c.steps, (old) => (old === index ? undefined : old > index ? old - 1 : old));
+  });
+}
+
+export function duplicateStep(p: Preset, index: number): Preset {
+  return edit(p, (c) => {
+    c.steps.splice(index + 1, 0, structuredClone(c.steps[index]));
+    remapReveals(c.steps, (old) => (old > index ? old + 1 : old));
+  });
+}
+
+/** Appends `n` single-turn steps that alternate between the teams, starting with A. */
+export function alternateSteps(p: Preset, action: 'ban' | 'pick', pool: string, n: number): Preset {
+  return edit(p, (c) => {
+    for (let i = 0; i < n; i++) c.steps.push({ team: i % 2 ? 'B' : 'A', action, pool, count: 1 });
   });
 }
 
