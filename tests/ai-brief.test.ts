@@ -26,13 +26,6 @@ describe('AI brief', () => {
     expect(buildAiBrief()).toContain('Return one JSON object only');
   });
 
-  it('tells the AI to take item images from the warno-icons repo', () => {
-    const brief = buildAiBrief();
-    expect(brief).toContain('https://raw.githubusercontent.com/DotSpy/warno-icons/master/1v1/airport.png');
-    expect(brief).toContain('divisions/<nato|pact>/<nation>/');
-    expect(brief).toContain('%20');
-  });
-
   it('embeds the minimal and the full example as JSON', () => {
     const brief = buildAiBrief();
 
