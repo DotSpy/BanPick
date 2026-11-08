@@ -109,7 +109,7 @@ export function buildAiBrief(example: Preset = fullExample()): string {
     `## Full example: ${example.name}`,
     json(example),
     '## Output',
-    'Return one JSON object only. If my rules cannot be expressed in this format, pick the closest valid preset and put nothing else in the reply.',
+    'Return one JSON object only wrapped in ```json ```. If my rules cannot be expressed in this format, pick the closest valid preset and put nothing else in the reply.',
     '',
   ].join('\n');
 }
